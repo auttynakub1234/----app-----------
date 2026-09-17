@@ -1,0 +1,24 @@
+{
+  "name": "skm-wellness-app",
+  "version": "1.0.0",
+  "description": "SKM Wellness & Health Tracker - โปรแกรมอาหารเสริมและการดูแลส่วนบุคคล",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'No build step required for static site'"
+  },
+  "keywords": [
+    "wellness",
+    "health",
+    "tracker",
+    "supplements"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}
