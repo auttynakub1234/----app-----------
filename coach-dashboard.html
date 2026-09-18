@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Dashboard - SKM.WELLNESS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            skm: {
+              blue: '#0284c7',
+              darkblue: '#0369a1',
+              accent: '#0ea5e9',
+              light: '#f0f9ff'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    .coach-card { transition: all 0.3s; }
+    .coach-card:hover { transform: translateY(-4px); }
+    .tab-btn { color: #64748b; }
+    .tab-btn.active { background: linear-gradient(to right, #0ea5e9, #2563eb); color: white; }
+    .tab-content { display: block; }
+    .tab-content.hidden { display: none; }
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .animate-slideIn { animation: slideIn 0.3s ease-out; }
+  </style>
+  <script src="admin-settings.js"></script>
+  <script src="body-shapes.js"></script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center">
+          <i class="ph ph-user-circle-gear text-white text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold">SKM Admin Panel</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400">จัดการระบบทั้งหมด</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+          <i id="theme-icon" class="ph ph-moon text-lg"></i>
+        </button>
+        <button onclick="logout()" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition">
+          <i class="ph ph-sign-out"></i> ออกจากระบบ
+        </button>
+      </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-2 mb-6 flex gap-2 overflow-x-auto">
+      <button onclick="showTab('coaches')" id="tab-coaches" class="tab-btn active px-4 py-2 rounded-xl font-medium text-sm transition whitespace-nowrap">
+        <i class="ph ph-users"></i> โค้ช
+      </button>
+      <button onclick="showTab('bodyshapes')" id="tab-bodyshapes" class="tab-btn px-4 py-2 rounded-xl font-medium text-sm transition whitespace-nowrap">
+        <i class="ph ph-image"></i> รูปรูปร่าง
+      </button>
+      <button onclick="showTab('branding')" id="tab-branding" class="tab-btn px-4 py-2 rounded-xl font-medium text-sm transition whitespace-nowrap">
+        <i class="ph ph-paint-brush"></i> โลโก้ & พื้นหลัง
+      </button>
+    </div>
+
+    <!-- Tab Content: Coaches -->
+    <div id="content-coaches" class="tab-content">
+      <!-- Add New Coach Button -->
+      <div class="mb-6">
+        <button onclick="openAddCoachModal()" class="px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg shadow-sky-500/30 flex items-center gap-2 transition-all active:scale-95">
+          <i class="ph ph-plus-circle text-xl"></i> เพิ่มโค้ชใหม่
+        </button>
+      </div>
+
+      <!-- Coaches List -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="coaches-container">
+        <!-- Coaches will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Tab Content: Body Shapes -->
+    <div id="content-bodyshapes" class="tab-content hidden">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Shape 1: ผอม -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+          <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="font-bold text-lg">รูปร่างผอม</h3>
+            <p class="text-xs text-slate-400">BMI &lt; 18.5</p>
+          </div>
+
+          <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+            <img id="preview-thin" src="" class="w-full h-full object-contain hidden">
+            <div id="placeholder-thin" class="text-center text-slate-400">
+              <i class="ph ph-image text-6xl mb-2"></i>
+              <p class="text-sm">ยังไม่มีรูปภาพ</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center">
+            <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+            <p id="size-thin" class="font-bold text-blue-600 dark:text-blue-400">ไม่ระบุ</p>
+          </div>
+
+          <div class="space-y-3">
+            <input type="text" id="shape-thin-size-input" placeholder="เช่น น้ำหนัก 45 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+            <input type="file" id="upload-thin" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'thin')">
+            <button onclick="document.getElementById('upload-thin').click()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition">
+              <i class="ph ph-upload"></i> เลือกรูปภาพ
+            </button>
+
+            <button onclick="removeBodyShape('thin')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+              <i class="ph ph-trash"></i> ลบรูป
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-400 text-center">แนะนำ: 400x600 px | สูงสุด 2 MB</p>
+        </div>
+
+        <!-- Shape 2: ปกติ -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+          <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="font-bold text-lg">รูปร่างปกติ</h3>
+            <p class="text-xs text-slate-400">BMI 18.5 - 22.9</p>
+          </div>
+
+          <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+            <img id="preview-normal" src="" class="w-full h-full object-contain hidden">
+            <div id="placeholder-normal" class="text-center text-slate-400">
+              <i class="ph ph-image text-6xl mb-2"></i>
+              <p class="text-sm">ยังไม่มีรูปภาพ</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
+            <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+            <p id="size-normal" class="font-bold text-emerald-600 dark:text-emerald-400">ไม่ระบุ</p>
+          </div>
+
+          <div class="space-y-3">
+            <input type="text" id="shape-normal-size-input" placeholder="เช่น น้ำหนัก 60 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+            <input type="file" id="upload-normal" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'normal')">
+            <button onclick="document.getElementById('upload-normal').click()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition">
+              <i class="ph ph-upload"></i> เลือกรูปภาพ
+            </button>
+
+            <button onclick="removeBodyShape('normal')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+              <i class="ph ph-trash"></i> ลบรูป
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-400 text-center">แนะนำ: 400x600 px | สูงสุด 2 MB</p>
+        </div>
+
+        <!-- Shape 3: อ้วน -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+          <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="font-bold text-lg">รูปร่างอ้วน</h3>
+            <p class="text-xs text-slate-400">BMI ≥ 25</p>
+          </div>
+
+          <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+            <img id="preview-fat" src="" class="w-full h-full object-contain hidden">
+            <div id="placeholder-fat" class="text-center text-slate-400">
+              <i class="ph ph-image text-6xl mb-2"></i>
+              <p class="text-sm">ยังไม่มีรูปภาพ</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
+            <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+            <p id="size-fat" class="font-bold text-orange-600 dark:text-orange-400">ไม่ระบุ</p>
+          </div>
+
+          <div class="space-y-3">
+            <input type="text" id="shape-fat-size-input" placeholder="เช่น น้ำหนัก 80 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+            <input type="file" id="upload-fat" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'fat')">
+            <button onclick="document.getElementById('upload-fat').click()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-sm transition">
+              <i class="ph ph-upload"></i> เลือกรูปภาพ
+            </button>
+
+            <button onclick="removeBodyShape('fat')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+              <i class="ph ph-trash"></i> ลบรูป
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-400 text-center">แนะนำ: 400x600 px | สูงสุด 2 MB</p>
+        </div>
+
+      </div>
+
+      <div class="mt-6 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-6 border border-sky-200 dark:border-slate-600">
+        <div class="flex items-start gap-3">
+          <i class="ph ph-info text-sky-600 text-2xl shrink-0"></i>
+          <div class="text-sm text-slate-600 dark:text-slate-300">
+            <p class="font-bold mb-2">คำแนะนำ:</p>
+            <ul class="space-y-1 text-xs">
+              <li>• อัปโหลดรูปภาพที่ชัดเจนและมีคุณภาพ</li>
+              <li>• แนะนำขนาด 400x600 px (อัตราส่วน 2:3)</li>
+              <li>• รูปจะแสดงในหน้า "เลือกรูปร่างของคุณ" (หน้า 6)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Branding -->
+    <div id="content-branding" class="tab-content hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Logo Upload -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+          <div class="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+            <div class="w-10 h-10 bg-sky-100 dark:bg-sky-900/30 rounded-xl flex items-center justify-center">
+              <i class="ph ph-image text-sky-600 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-bold">โลโก้แอป</h3>
+              <p class="text-xs text-slate-400">แสดงที่ Header ทุกหน้า</p>
+            </div>
+          </div>
+
+          <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-6 text-center">
+            <input type="file" id="logo-upload" accept="image/jpeg,image/png,image/webp,image/svg+xml" class="hidden" onchange="handleLogoUpload(event)">
+
+            <div id="logo-preview" class="mb-4">
+              <img id="logo-preview-img" src="https://via.placeholder.com/200?text=No+Logo" class="w-24 h-24 mx-auto rounded-xl object-cover border-2 border-sky-500">
+            </div>
+
+            <button onclick="document.getElementById('logo-upload').click()" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold transition">
+              <i class="ph ph-upload"></i> เลือกโลโก้
+            </button>
+
+            <p class="text-xs text-slate-400 mt-3">
+              <strong>แนะนำ:</strong> 512x512 px | <strong>สูงสุด:</strong> 2 MB
+            </p>
+          </div>
+
+          <button onclick="removeLogo()" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium hover:bg-rose-200 transition">
+            <i class="ph ph-trash"></i> ลบโลโก้
+          </button>
+        </div>
+
+        <!-- Background Upload -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+          <div class="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+              <i class="ph ph-image-square text-purple-600 text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-bold">พื้นหลังหน้าแรก</h3>
+              <p class="text-xs text-slate-400">แสดงที่หน้าแรกเท่านั้น</p>
+            </div>
+          </div>
+
+          <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-6 text-center">
+            <input type="file" id="bg-upload" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleBgUpload(event)">
+
+            <div id="bg-preview" class="mb-4">
+              <div class="w-full h-40 rounded-xl overflow-hidden border-2 border-purple-500">
+                <img id="bg-preview-img" src="https://via.placeholder.com/400x600?text=No+Background" class="w-full h-full object-cover">
+              </div>
+            </div>
+
+            <button onclick="document.getElementById('bg-upload').click()" class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition">
+              <i class="ph ph-upload"></i> เลือกพื้นหลัง
+            </button>
+
+            <p class="text-xs text-slate-400 mt-3">
+              <strong>แนะนำ:</strong> 1080x1920 px | <strong>สูงสุด:</strong> 5 MB
+            </p>
+          </div>
+
+          <button onclick="removeBackground()" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium hover:bg-rose-200 transition">
+            <i class="ph ph-trash"></i> ลบพื้นหลัง
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Add/Edit Coach Modal -->
+  <div id="coach-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+        <h3 class="text-xl font-bold" id="modal-title">เพิ่มโค้ชใหม่</h3>
+        <button onclick="closeCoachModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <form id="coach-form" onsubmit="saveCoach(event)" class="space-y-4">
+        <input type="hidden" id="coach-id">
+
+        <!-- Photo Upload -->
+        <div>
+          <label class="text-sm font-bold mb-2 block">รูปโค้ช</label>
+          <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-4 text-center">
+            <input type="file" id="coach-photo" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="previewCoachPhoto(event)">
+            <div id="photo-preview" class="hidden mb-3">
+              <img id="photo-preview-img" src="" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-sky-500">
+            </div>
+            <button type="button" onclick="document.getElementById('coach-photo').click()" class="px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold">
+              เลือกรูปภาพ
+            </button>
+            <p class="text-xs text-slate-400 mt-2">แนะนำ: 512x512 px | สูงสุด 2 MB | JPG, PNG, WebP</p>
+          </div>
+        </div>
+
+        <!-- Name -->
+        <div>
+          <label class="text-sm font-bold mb-2 block">ชื่อโค้ช</label>
+          <input type="text" id="coach-name" placeholder="เช่น โค้ชแอน" required class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none">
+        </div>
+
+        <!-- Code -->
+        <div>
+          <label class="text-sm font-bold mb-2 block">รหัสโค้ช (6 หลัก)</label>
+          <input type="text" id="coach-code" placeholder="เช่น SKM123" maxlength="6" required class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none uppercase">
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="text-sm font-bold mb-2 block">ตำแหน่ง</label>
+          <input type="text" id="coach-title" placeholder="เช่น SKM.WELLNESS COACH" required class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none">
+        </div>
+
+        <!-- Quote -->
+        <div>
+          <label class="text-sm font-bold mb-2 block">คำพูดประจำตัว</label>
+          <textarea id="coach-quote" placeholder="เช่น ดูแลคุณเหมือนคนในครอบครัว..." rows="3" class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none resize-none"></textarea>
+        </div>
+
+        <!-- Contact -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-bold mb-2 block">LINE ID</label>
+            <input type="text" id="coach-line" placeholder="@coach" class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none">
+          </div>
+          <div>
+            <label class="text-sm font-bold mb-2 block">เบอร์โทร</label>
+            <input type="tel" id="coach-phone" placeholder="02-xxx-xxxx" class="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 dark:bg-slate-700 focus:border-sky-500 outline-none">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+          บันทึกข้อมูล
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Check authentication
+    if (sessionStorage.getItem('coach_admin_auth') !== 'true') {
+      window.location.href = 'coach-login.html';
+    }
+
+    // Coach Management System
+    class CoachManager {
+      constructor() {
+        this.coaches = this.loadCoaches();
+        this.currentEditId = null;
+        this.render();
+      }
+
+      loadCoaches() {
+        const data = localStorage.getItem('skm_coaches');
+        if (!data) {
+          // Default coaches
+          const defaultCoaches = [
+            {
+              id: '1',
+              name: 'โค้ชแอน',
+              code: 'SKM123',
+              title: 'SKM.WELLNESS COACH',
+              quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
+              photo: 'https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300',
+              line: '@coach.ann',
+              phone: '02-xxx-xxxx',
+              createdAt: new Date().toISOString()
+            }
+          ];
+          this.saveCoaches(defaultCoaches);
+          return defaultCoaches;
+        }
+        return JSON.parse(data);
+      }
+
+      saveCoaches(coaches) {
+        localStorage.setItem('skm_coaches', JSON.stringify(coaches || this.coaches));
+      }
+
+      addCoach(coach) {
+        const newCoach = {
+          id: Date.now().toString(),
+          ...coach,
+          createdAt: new Date().toISOString()
+        };
+        this.coaches.push(newCoach);
+        this.saveCoaches();
+        this.render();
+        this.showToast('เพิ่มโค้ชสำเร็จ!', 'success');
+      }
+
+      updateCoach(id, data) {
+        const index = this.coaches.findIndex(c => c.id === id);
+        if (index !== -1) {
+          this.coaches[index] = { ...this.coaches[index], ...data, updatedAt: new Date().toISOString() };
+          this.saveCoaches();
+          this.render();
+          this.showToast('อัปเดตข้อมูลสำเร็จ!', 'success');
+        }
+      }
+
+      deleteCoach(id) {
+        if (confirm('ต้องการลบโค้ชนี้หรือไม่?')) {
+          this.coaches = this.coaches.filter(c => c.id !== id);
+          this.saveCoaches();
+          this.render();
+          this.showToast('ลบโค้ชสำเร็จ!', 'success');
+        }
+      }
+
+      getCoachByCode(code) {
+        return this.coaches.find(c => c.code.toUpperCase() === code.toUpperCase());
+      }
+
+      render() {
+        const container = document.getElementById('coaches-container');
+
+        if (this.coaches.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full text-center py-12">
+              <i class="ph ph-users text-6xl text-slate-300 dark:text-slate-600 mb-4"></i>
+              <p class="text-slate-500">ยังไม่มีข้อมูลโค้ช</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = this.coaches.map(coach => `
+          <div class="coach-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-sky-500 shrink-0">
+                <img src="${coach.photo}" class="w-full h-full object-cover" alt="${coach.name}">
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-lg truncate">${coach.name}</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">${coach.title}</p>
+                <div class="mt-2 inline-block px-2 py-1 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-xs font-bold rounded-lg">
+                  ${coach.code}
+                </div>
+              </div>
+            </div>
+
+            ${coach.quote ? `
+              <p class="text-xs italic text-slate-600 dark:text-slate-300 line-clamp-2">"${coach.quote}"</p>
+            ` : ''}
+
+            <div class="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+              ${coach.line ? `<div class="flex items-center gap-2"><i class="ph ph-chat-circle text-emerald-600"></i> ${coach.line}</div>` : ''}
+              ${coach.phone ? `<div class="flex items-center gap-2"><i class="ph ph-phone text-sky-600"></i> ${coach.phone}</div>` : ''}
+            </div>
+
+            <div class="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+              <button onclick="coachManager.editCoach('${coach.id}')" class="flex-1 py-2 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 rounded-xl text-sm font-medium hover:bg-sky-200 dark:hover:bg-sky-900/50 transition flex items-center justify-center gap-1">
+                <i class="ph ph-pencil"></i> แก้ไข
+              </button>
+              <button onclick="coachManager.deleteCoach('${coach.id}')" class="flex-1 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-xl text-sm font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition flex items-center justify-center gap-1">
+                <i class="ph ph-trash"></i> ลบ
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      editCoach(id) {
+        const coach = this.coaches.find(c => c.id === id);
+        if (!coach) return;
+
+        this.currentEditId = id;
+        document.getElementById('modal-title').textContent = 'แก้ไขข้อมูลโค้ช';
+        document.getElementById('coach-id').value = id;
+        document.getElementById('coach-name').value = coach.name;
+        document.getElementById('coach-code').value = coach.code;
+        document.getElementById('coach-title').value = coach.title;
+        document.getElementById('coach-quote').value = coach.quote || '';
+        document.getElementById('coach-line').value = coach.line || '';
+        document.getElementById('coach-phone').value = coach.phone || '';
+
+        if (coach.photo) {
+          document.getElementById('photo-preview').classList.remove('hidden');
+          document.getElementById('photo-preview-img').src = coach.photo;
+        }
+
+        openAddCoachModal();
+      }
+
+      showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        const colors = {
+          success: 'bg-emerald-500',
+          error: 'bg-rose-500',
+          info: 'bg-sky-500'
+        };
+        toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2`;
+        toast.innerHTML = `<i class="ph ph-check-circle text-xl"></i> <span>${message}</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+    }
+
+    // Initialize
+    const coachManager = new CoachManager();
+
+    // Modal Functions
+    function openAddCoachModal() {
+      document.getElementById('coach-modal').classList.remove('hidden');
+    }
+
+    function closeCoachModal() {
+      document.getElementById('coach-modal').classList.add('hidden');
+      document.getElementById('coach-form').reset();
+      document.getElementById('coach-id').value = '';
+      document.getElementById('photo-preview').classList.add('hidden');
+      document.getElementById('modal-title').textContent = 'เพิ่มโค้ชใหม่';
+      coachManager.currentEditId = null;
+    }
+
+    function previewCoachPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Validate
+      if (file.size > 2 * 1024 * 1024) {
+        alert('ขนาดไฟล์ต้องไม่เกิน 2 MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('photo-preview').classList.remove('hidden');
+        document.getElementById('photo-preview-img').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveCoach(event) {
+      event.preventDefault();
+
+      const coachData = {
+        name: document.getElementById('coach-name').value,
+        code: document.getElementById('coach-code').value.toUpperCase(),
+        title: document.getElementById('coach-title').value,
+        quote: document.getElementById('coach-quote').value,
+        line: document.getElementById('coach-line').value,
+        phone: document.getElementById('coach-phone').value,
+        photo: document.getElementById('photo-preview-img').src || 'https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300'
+      };
+
+      const editId = document.getElementById('coach-id').value;
+
+      if (editId) {
+        coachManager.updateCoach(editId, coachData);
+      } else {
+        coachManager.addCoach(coachData);
+      }
+
+      closeCoachModal();
+    }
+
+    function logout() {
+      if (confirm('ต้องการออกจากระบบหรือไม่?')) {
+        sessionStorage.removeItem('coach_admin_auth');
+        window.location.href = 'coach-login.html';
+      }
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-icon');
+
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        icon.className = 'ph ph-moon text-lg';
+        localStorage.setItem('app_theme', 'light');
+      } else {
+        html.classList.add('dark');
+        icon.className = 'ph ph-sun text-lg';
+        localStorage.setItem('app_theme', 'dark');
+      }
+    }
+
+    // Load theme
+    if (localStorage.getItem('app_theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('theme-icon').className = 'ph ph-sun text-lg';
+    }
+
+    // Tab Switching
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(`content-${tabName}`).classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+
+      if (tabName === 'bodyshapes') {
+        loadBodyShapesPreviews();
+      }
+      if (tabName === 'branding') {
+        loadBrandingPreviews();
+      }
+    }
+
+    // Load Body Shapes Previews
+    function loadBodyShapesPreviews() {
+      const shapes = ['thin', 'normal', 'fat'];
+
+      shapes.forEach(shape => {
+        const data = getBodyShapeData(shape);
+        if (data && data.image) {
+          document.getElementById(`preview-${shape}`).src = data.image;
+          document.getElementById(`preview-${shape}`).classList.remove('hidden');
+          document.getElementById(`placeholder-${shape}`).classList.add('hidden');
+          document.getElementById(`size-${shape}`).textContent = data.size || 'ไม่ระบุ';
+        }
+      });
+    }
+
+    // Load Branding Previews
+    function loadBrandingPreviews() {
+      const logoUrl = localStorage.getItem('app_logo_url');
+      const bgUrl = localStorage.getItem('home_bg_url');
+
+      if (logoUrl) {
+        document.getElementById('logo-preview-img').src = logoUrl;
+      }
+      if (bgUrl) {
+        document.getElementById('bg-preview-img').src = bgUrl;
+      }
+    }
+
+    // Logo & Background Upload
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (!file || file.size > 2 * 1024 * 1024) {
+        alert('ขนาดไฟล์ต้องไม่เกิน 2 MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        localStorage.setItem('app_logo_url', e.target.result);
+        document.getElementById('logo-preview-img').src = e.target.result;
+        coachManager.showToast('อัปโหลดโลโก้สำเร็จ!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleBgUpload(event) {
+      const file = event.target.files[0];
+      if (!file || file.size > 5 * 1024 * 1024) {
+        alert('ขนาดไฟล์ต้องไม่เกิน 5 MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        localStorage.setItem('home_bg_url', e.target.result);
+        document.getElementById('bg-preview-img').src = e.target.result;
+        coachManager.showToast('อัปโหลดพื้นหลังสำเร็จ!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+      if (confirm('ต้องการลบโลโก้หรือไม่?')) {
+        localStorage.removeItem('app_logo_url');
+        document.getElementById('logo-preview-img').src = 'https://via.placeholder.com/200?text=No+Logo';
+        coachManager.showToast('ลบโลโก้สำเร็จ', 'success');
+      }
+    }
+
+    function removeBackground() {
+      if (confirm('ต้องการลบพื้นหลังหรือไม่?')) {
+        localStorage.removeItem('home_bg_url');
+        document.getElementById('bg-preview-img').src = 'https://via.placeholder.com/400x600?text=No+Background';
+        coachManager.showToast('ลบพื้นหลังสำเร็จ', 'success');
+      }
+    }
+
+    // Export coaches for main app
+    window.getCoachByCode = (code) => coachManager.getCoachByCode(code);
+    window.getAllCoaches = () => coachManager.coaches;
+  </script>
+
+</body>
+</html>

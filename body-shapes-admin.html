@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการรูปรูปร่าง - SKM Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button onclick="window.location.href='coach-dashboard.html'" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 transition">
+          <i class="ph ph-arrow-left text-xl"></i>
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold">จัดการรูปรูปร่าง</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400">อัปโหลดรูปสำหรับหน้าเลือกรูปร่าง</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Body Shapes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Shape 1: ผอม -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+        <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+          <h3 class="font-bold text-lg">รูปร่างผอม</h3>
+          <p class="text-xs text-slate-400">BMI &lt; 18.5</p>
+        </div>
+
+        <!-- Preview -->
+        <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+          <img id="preview-thin" src="" class="w-full h-full object-contain hidden">
+          <div id="placeholder-thin" class="text-center text-slate-400">
+            <i class="ph ph-image text-6xl mb-2"></i>
+            <p class="text-sm">ยังไม่มีรูปภาพ</p>
+          </div>
+        </div>
+
+        <!-- Size Info -->
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center">
+          <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+          <p id="size-thin" class="font-bold text-blue-600 dark:text-blue-400">ไม่ระบุ</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="space-y-3">
+          <input type="text" id="shape-thin-size-input" placeholder="เช่น น้ำหนัก 45 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+          <input type="file" id="upload-thin" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'thin')">
+          <button onclick="document.getElementById('upload-thin').click()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition">
+            <i class="ph ph-upload"></i> เลือกรูปภาพ
+          </button>
+
+          <button onclick="removeBodyShape('thin')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+            <i class="ph ph-trash"></i> ลบรูป
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center">
+          แนะนำ: 400x600 px<br>สูงสุด 2 MB
+        </p>
+      </div>
+
+      <!-- Shape 2: ปกติ -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+        <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+          <h3 class="font-bold text-lg">รูปร่างปกติ</h3>
+          <p class="text-xs text-slate-400">BMI 18.5 - 22.9</p>
+        </div>
+
+        <!-- Preview -->
+        <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+          <img id="preview-normal" src="" class="w-full h-full object-contain hidden">
+          <div id="placeholder-normal" class="text-center text-slate-400">
+            <i class="ph ph-image text-6xl mb-2"></i>
+            <p class="text-sm">ยังไม่มีรูปภาพ</p>
+          </div>
+        </div>
+
+        <!-- Size Info -->
+        <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
+          <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+          <p id="size-normal" class="font-bold text-emerald-600 dark:text-emerald-400">ไม่ระบุ</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="space-y-3">
+          <input type="text" id="shape-normal-size-input" placeholder="เช่น น้ำหนัก 60 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+          <input type="file" id="upload-normal" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'normal')">
+          <button onclick="document.getElementById('upload-normal').click()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition">
+            <i class="ph ph-upload"></i> เลือกรูปภาพ
+          </button>
+
+          <button onclick="removeBodyShape('normal')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+            <i class="ph ph-trash"></i> ลบรูป
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center">
+          แนะนำ: 400x600 px<br>สูงสุด 2 MB
+        </p>
+      </div>
+
+      <!-- Shape 3: อ้วน -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+        <div class="text-center pb-3 border-b border-slate-200 dark:border-slate-700">
+          <h3 class="font-bold text-lg">รูปร่างอ้วน</h3>
+          <p class="text-xs text-slate-400">BMI ≥ 25</p>
+        </div>
+
+        <!-- Preview -->
+        <div class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex items-center justify-center bg-slate-50 dark:bg-slate-700">
+          <img id="preview-fat" src="" class="w-full h-full object-contain hidden">
+          <div id="placeholder-fat" class="text-center text-slate-400">
+            <i class="ph ph-image text-6xl mb-2"></i>
+            <p class="text-sm">ยังไม่มีรูปภาพ</p>
+          </div>
+        </div>
+
+        <!-- Size Info -->
+        <div class="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
+          <p class="text-xs text-slate-500 dark:text-slate-400">ขนาดที่กำหนด</p>
+          <p id="size-fat" class="font-bold text-orange-600 dark:text-orange-400">ไม่ระบุ</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="space-y-3">
+          <input type="text" id="shape-fat-size-input" placeholder="เช่น น้ำหนัก 80 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+
+          <input type="file" id="upload-fat" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'fat')">
+          <button onclick="document.getElementById('upload-fat').click()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-sm transition">
+            <i class="ph ph-upload"></i> เลือกรูปภาพ
+          </button>
+
+          <button onclick="removeBodyShape('fat')" class="w-full py-2.5 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl font-medium text-sm hover:bg-rose-200 transition">
+            <i class="ph ph-trash"></i> ลบรูป
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center">
+          แนะนำ: 400x600 px<br>สูงสุด 2 MB
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Info Card -->
+    <div class="mt-6 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 rounded-2xl p-6 border border-sky-200 dark:border-slate-600">
+      <div class="flex items-start gap-3">
+        <i class="ph ph-info text-sky-600 text-2xl shrink-0"></i>
+        <div class="text-sm text-slate-600 dark:text-slate-300 space-y-2">
+          <p class="font-bold text-slate-800 dark:text-white">คำแนะนำ:</p>
+          <ul class="space-y-1 list-disc list-inside">
+            <li>อัปโหลดรูปภาพที่ชัดเจนและมีคุณภาพ</li>
+            <li>แนะนำขนาด 400x600 px (อัตราส่วน 2:3)</li>
+            <li>ขนาดไฟล์สูงสุด 2 MB ต่อรูป</li>
+            <li>ใส่ขนาด/น้ำหนักตัวอย่างเพื่อให้ผู้ใช้เห็นภาพ</li>
+            <li>รูปจะแสดงในหน้า "เลือกรูปร่างของคุณ" (หน้า 6)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="body-shapes.js"></script>
+  <script>
+    // Check authentication
+    if (sessionStorage.getItem('coach_admin_auth') !== 'true') {
+      window.location.href = 'coach-login.html';
+    }
+
+    // Load previews on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreviews();
+
+      // Load theme
+      if (localStorage.getItem('app_theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    });
+
+    function loadPreviews() {
+      const shapes = ['thin', 'normal', 'fat'];
+
+      shapes.forEach(shape => {
+        const data = getBodyShapeData(shape);
+        if (data) {
+          document.getElementById(`preview-${shape}`).src = data.image;
+          document.getElementById(`preview-${shape}`).classList.remove('hidden');
+          document.getElementById(`placeholder-${shape}`).classList.add('hidden');
+          document.getElementById(`size-${shape}`).textContent = data.size || 'ไม่ระบุ';
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

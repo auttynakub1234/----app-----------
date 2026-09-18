@@ -1,0 +1,144 @@
+<!-- Settings Modal for Logo & Background Upload -->
+<div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+      <h3 class="text-lg font-bold">ตั้งค่าระบบ</h3>
+      <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+        <i class="ph ph-x text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Logo Upload -->
+    <div class="space-y-2">
+      <label class="text-sm font-bold flex items-center gap-2">
+        <i class="ph ph-image text-sky-600"></i> อัปโหลดโลโก้
+      </label>
+      <p class="text-xs text-slate-400">ขนาดแนะนำ: 512x512 px | สูงสุด 2 MB</p>
+      <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-4 text-center">
+        <input type="file" id="logo-upload" accept="image/jpeg,image/png,image/webp,image/svg+xml" class="hidden" onchange="handleLogoUpload(event)">
+        <button onclick="document.getElementById('logo-upload').click()" class="px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold">
+          เลือกไฟล์โลโก้
+        </button>
+        <p class="text-xs text-slate-400 mt-2">JPG, PNG, WebP, SVG</p>
+      </div>
+      <div id="logo-preview" class="hidden mt-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center gap-3">
+        <img id="logo-preview-img" src="" class="w-12 h-12 object-cover rounded-lg">
+        <div class="flex-1 text-xs">
+          <p class="font-bold">โลโก้ปัจจุบัน</p>
+          <button onclick="removeLogo()" class="text-rose-600 mt-1">ลบออก</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Upload -->
+    <div class="space-y-2">
+      <label class="text-sm font-bold flex items-center gap-2">
+        <i class="ph ph-image-square text-sky-600"></i> อัปโหลดพื้นหลังหน้าแรก
+      </label>
+      <p class="text-xs text-slate-400">ขนาดแนะนำ: 1080x1920 px (แนวตั้ง) | สูงสุด 5 MB</p>
+      <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-4 text-center">
+        <input type="file" id="bg-upload" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleBgUpload(event)">
+        <button onclick="document.getElementById('bg-upload').click()" class="px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold">
+          เลือกไฟล์พื้นหลัง
+        </button>
+        <p class="text-xs text-slate-400 mt-2">JPG, PNG, WebP</p>
+      </div>
+      <div id="bg-preview" class="hidden mt-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+        <div class="w-full h-32 rounded-lg overflow-hidden">
+          <img id="bg-preview-img" src="" class="w-full h-full object-cover">
+        </div>
+        <button onclick="removeBackground()" class="text-rose-600 text-xs mt-2">ลบพื้นหลัง</button>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="p-3 bg-sky-50 dark:bg-slate-700/50 rounded-xl text-xs text-slate-600 dark:text-slate-300">
+      <i class="ph ph-info text-sky-600"></i> รูปภาพจะถูกบันทึกในเครื่องของคุณ และจะแสดงผลทันทีหลังอัปโหลด
+    </div>
+
+    <button onclick="closeSettingsModal()" class="w-full py-3 bg-slate-100 dark:bg-slate-700 rounded-xl font-bold text-sm">
+      ปิด
+    </button>
+  </div>
+</div>
+
+<style>
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+  }
+</style>
+
+<script>
+  function openSettingsModal() {
+    document.getElementById('settings-modal').classList.remove('hidden');
+    loadSettingsPreviews();
+  }
+
+  function closeSettingsModal() {
+    document.getElementById('settings-modal').classList.add('hidden');
+  }
+
+  function loadSettingsPreviews() {
+    // Logo preview
+    const logoUrl = localStorage.getItem('app_logo_url');
+    if (logoUrl) {
+      document.getElementById('logo-preview').classList.remove('hidden');
+      document.getElementById('logo-preview-img').src = logoUrl;
+    }
+
+    // Background preview
+    const bgUrl = localStorage.getItem('home_bg_url');
+    if (bgUrl) {
+      document.getElementById('bg-preview').classList.remove('hidden');
+      document.getElementById('bg-preview-img').src = bgUrl;
+    }
+  }
+
+  function handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (file && backend.uploadLogo(file)) {
+      // Success handled in backend
+    }
+  }
+
+  function handleBgUpload(event) {
+    const file = event.target.files[0];
+    if (file && backend.uploadBackground(file)) {
+      // Success handled in backend
+    }
+  }
+
+  function removeLogo() {
+    localStorage.removeItem('app_logo_url');
+    backend.showToast('ลบโลโก้สำเร็จ', 'success');
+    setTimeout(() => location.reload(), 500);
+  }
+
+  function removeBackground() {
+    localStorage.removeItem('home_bg_url');
+    backend.showToast('ลบพื้นหลังสำเร็จ', 'success');
+    setTimeout(() => location.reload(), 500);
+  }
+</script>

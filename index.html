@@ -1,19 +1,10 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="โปรแกรมอาหารเสริมและการดูแลส่วนบุคคล โดยทีมแพทย์และผู้เชี่ยวชาญ">
-  <meta name="keywords" content="wellness, health, อาหารเสริม, ลดน้ำหนัก, เพิ่มกล้ามเนื้อ">
-  <meta name="theme-color" content="#14b8a6">
-
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="manifest.json">
-
-  <!-- Apple Touch Icons -->
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-  <title>SKM Wellness & Health Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>สูตรคุณหมอ - SKM.WELLNESS</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,281 +12,1157 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#f0fdf9',
-              100: '#ccfbef',
-              500: '#14b8a6',
-              600: '#0d9488',
-              700: '#0f766e',
+            skm: {
+              blue: '#0284c7',
+              darkblue: '#0369a1',
+              accent: '#0ea5e9',
+              light: '#f0f9ff'
             }
           }
         }
       }
     }
   </script>
+  <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="styles.css">
+  <!-- Google Fonts Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- App Config & Backend -->
+  <script src="config.js"></script>
+  <script src="backend.js"></script>
+  <script src="body-shapes.js"></script>
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex justify-center selection:bg-sky-500 selection:text-white transition-colors duration-200">
 
-  <div class="max-w-md mx-auto min-h-screen bg-white dark:bg-slate-800 shadow-2xl flex flex-col relative pb-20">
+  <!-- Mobile Frame Screen -->
+  <div class="w-full max-w-[420px] bg-white dark:bg-slate-900 min-h-screen shadow-2xl flex flex-col relative pb-20 overflow-x-hidden border-x border-slate-200/60 dark:border-slate-800">
 
-    <header class="p-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur sticky top-0 z-20">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold">
-          <i class="ph ph-heartbeat text-lg"></i>
-        </div>
-        <span class="font-bold text-lg tracking-wide text-brand-700 dark:text-brand-500">สูตรคุณหมอ</span>
+    <!-- Top System Dynamic Bar -->
+    <header class="h-12 px-4 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-30 border-b border-slate-100 dark:border-slate-800">
+      <div id="header-back-btn" class="hidden">
+        <button onclick="goBack()" class="p-1 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400">
+          <i class="ph ph-caret-left text-xl font-bold"></i>
+        </button>
       </div>
-      <button onclick="app.toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-yellow-400 transition">
-        <i id="theme-icon" class="ph ph-sun text-xl"></i>
-      </button>
+      <div id="header-brand" class="flex items-center gap-1.5">
+        <i class="ph ph-heartbeat text-sky-600 text-xl"></i>
+        <span class="text-xs font-bold tracking-tight text-sky-700 dark:text-sky-400">SKM.WELLNESS</span>
+      </div>
+
+      <!-- Theme Toggle + Coach Admin Link -->
+      <div class="ml-auto flex items-center gap-1.5">
+        <a href="coach-login.html" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 transition">
+          <i class="ph ph-gear text-sm"></i>
+        </a>
+        <button onclick="backend.toggleTheme()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-amber-400">
+          <i id="theme-btn-icon" class="ph ph-moon text-sm"></i>
+        </button>
+      </div>
     </header>
 
+    <!-- Main Screens Container -->
     <main class="flex-1 overflow-y-auto">
 
-      <section id="tab-home" class="p-5 space-y-6">
-        <div class="rounded-3xl bg-gradient-to-br from-brand-50 to-brand-100 dark:from-slate-700 dark:to-brand-900/40 p-6 border border-brand-200 dark:border-slate-600 relative overflow-hidden">
-          <span class="text-xs uppercase font-bold text-brand-600 dark:text-brand-300 tracking-wider">SKM.WELLNESS</span>
-          <h2 class="text-2xl font-bold mt-2 leading-snug">สุขภาพที่ดี<br><span class="text-brand-600">เริ่มต้นจากการดูแลตัวเอง</span></h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">โปรแกรมอาหารเสริมและการดูแลส่วนบุคคล โดยทีมแพทย์และผู้เชี่ยวชาญ</p>
-        </div>
-
+      <!-- ================= 1. หน้าแรก (ประเมินสุขภาพ) ================= -->
+      <section id="screen-1" class="screen p-5 flex flex-col justify-between min-h-[calc(100vh-8rem)]">
         <div>
-          <h3 class="font-bold text-base mb-3 flex items-center gap-2">
-            <i class="ph ph-compass text-brand-500 text-lg"></i> เลือกเส้นทางของคุณ
-          </h3>
-          <div class="space-y-3">
-            <div onclick="app.selectGoal('lean')" class="goal-card cursor-pointer p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 flex items-center justify-between transition bg-white dark:bg-slate-800 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center text-2xl font-bold">
-                  💪
-                </div>
-                <div>
-                  <h4 class="font-bold text-sm">1. คนผอม อยากหุ่นดี</h4>
-                  <p class="text-xs text-slate-400">เพิ่มกล้ามเนื้อ กระชับสัดส่วน เสริมภูมิคุ้มกัน</p>
-                </div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sky-600 font-bold text-sm tracking-wide">🩺 สูตรคุณหมอ</span>
+            <span class="text-[10px] text-slate-400">SKM.WELLNESS</span>
+          </div>
+          <h1 class="text-3xl font-extrabold leading-tight text-slate-800 dark:text-white">สุขภาพที่ดี<br><span class="text-sky-600">เริ่มจากการดูแลตัวเองวันนี้</span></h1>
+          <p class="text-xs text-slate-500 mt-2">เปลี่ยนสุขภาพทีละวัน เปลี่ยนชีวิตได้ทั้งชีวิต</p>
+
+          <div class="mt-6 space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
+              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
+                <i class="ph ph-heartbeat"></i>
               </div>
-              <i class="ph ph-caret-right text-slate-400"></i>
+              <p class="text-xs font-medium">ดูแลสุขภาพให้ถูกจุดรายบุคคล</p>
             </div>
-
-            <div onclick="app.selectGoal('fat_loss')" class="goal-card cursor-pointer p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 flex items-center justify-between transition bg-white dark:bg-slate-800 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center text-2xl font-bold">
-                  ⚖️
-                </div>
-                <div>
-                  <h4 class="font-bold text-sm">2. คนอ้วน อยากผอม</h4>
-                  <p class="text-xs text-slate-400">เร่งเผาผลาญ ลดไขมัน ปรับสมดุลลำไส้</p>
-                </div>
+            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
+              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
+                <i class="ph ph-book-open-text"></i>
               </div>
-              <i class="ph ph-caret-right text-slate-400"></i>
+              <p class="text-xs font-medium">ข้อมูลสุขภาพที่เชื่อถือได้</p>
             </div>
-
-            <div onclick="app.selectGoal('medical_care')" class="goal-card cursor-pointer p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 flex items-center justify-between transition bg-white dark:bg-slate-800 shadow-sm">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/40 text-rose-600 flex items-center justify-center text-2xl font-bold">
-                  🩺
-                </div>
-                <div>
-                  <h4 class="font-bold text-sm">3. คนอ้วนมีโรค อยากผอมสุขภาพดี</h4>
-                  <p class="text-xs text-slate-400">คุมน้ำตาล/ไขมัน ปลอดภัย ควบคุมโดยแพทย์</p>
-                </div>
+            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
+              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
+                <i class="ph ph-sparkle"></i>
               </div>
-              <i class="ph ph-caret-right text-slate-400"></i>
+              <p class="text-xs font-medium">ทำได้จริง เห็นผลลัพธ์ยั่งยืน</p>
             </div>
           </div>
         </div>
 
-        <div class="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-3xl border border-slate-200 dark:border-slate-700">
-          <h3 class="font-bold text-sm mb-3">คำนวณค่า BMI เพื่อออกแบบสูตรที่เหมาะสม</h3>
-          <div class="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label class="text-xs text-slate-500 dark:text-slate-400">น้ำหนัก (กก.)</label>
-              <input type="number" id="bmi-weight" placeholder="เช่น 65" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-            </div>
-            <div>
-              <label class="text-xs text-slate-500 dark:text-slate-400">ส่วนสูง (ซม.)</label>
-              <input type="number" id="bmi-height" placeholder="เช่น 165" class="w-full mt-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-            </div>
-          </div>
-          <button onclick="app.calculateBMI()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl text-sm transition">คำนวณและประเมินผล</button>
-
-          <div id="bmi-result" class="mt-4 p-3 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 hidden">
-            <div class="flex justify-between items-center">
-              <span class="text-xs text-slate-500">BMI ของคุณ: <b id="bmi-value" class="text-base text-brand-600">22.5</b></span>
-              <span id="bmi-badge" class="px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700 font-bold">สมส่วน</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-products" class="p-5 space-y-6 hidden">
-        <div>
-          <h2 class="text-lg font-bold">ผลิตภัณฑ์เฉพาะกลุ่มสูตรแพทย์</h2>
-          <p class="text-xs text-slate-400">เลือกโปรแกรมที่ออกแบบมาเฉพาะเป้าหมายของคุณ</p>
-        </div>
-
-        <div class="space-y-4" id="products-container">
-          <!-- Products will be loaded here -->
-        </div>
-      </section>
-
-      <section id="tab-tracker" class="p-5 space-y-6 hidden">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-bold">บันทึก & ติดตามความก้าวหน้า</h2>
-            <p class="text-xs text-slate-400">ระบบติดตามการทานและผลลัพธ์แบบใส่ใจ</p>
-          </div>
-          <span class="text-xs bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-300 font-bold px-2 py-1 rounded-lg" id="progress-day">วันที่ 1 / 30</span>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl space-y-3">
-          <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400">เช็กอินการทานวันนี้</h3>
-          <div class="space-y-2" id="daily-checklist">
-            <!-- Checklist items will be loaded here -->
-          </div>
-        </div>
-
-        <div class="bg-brand-50 dark:bg-slate-700/40 p-4 rounded-2xl border border-brand-100 dark:border-slate-700 space-y-3">
-          <h3 class="font-bold text-sm text-brand-700 dark:text-brand-300">อัปเดตผลและอาการให้โค้ชทราบ</h3>
-          <form id="weight-log-form" onsubmit="app.submitWeightLog(event)">
-            <div>
-              <label class="text-xs text-slate-500">น้ำหนักปัจจุบัน (กก.)</label>
-              <input type="number" step="0.1" id="current-weight" placeholder="เช่น 64.2" required class="w-full mt-1 p-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm">
-            </div>
-            <div class="mt-3">
-              <label class="text-xs text-slate-500">อาการระหว่างทาน / ข้อกังวล</label>
-              <select id="symptom-select" class="w-full mt-1 p-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm">
-                <option value="normal">ปกติ สบายตัว ขับถ่ายง่ายขึ้น</option>
-                <option value="dizzy">มีอาการเวียนศีรษะเล็กน้อย (ต้องการคำปรึกษา)</option>
-                <option value="frequent">ขับถ่ายบ่อยกว่าปกติ</option>
-                <option value="stable">ค่าน้ำตาล/ความดันคงที่</option>
-              </select>
-            </div>
-            <button type="submit" class="w-full mt-3 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow hover:bg-brand-700">ส่งอัปเดตอาการ</button>
-          </form>
-        </div>
-
-        <div class="p-4 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs">
-              👩‍⚕️
-            </div>
-            <div>
-              <p class="font-bold text-xs">พญ. พิมพ์ สุขภาพดี</p>
-              <p class="text-[10px] text-slate-400">โค้ชดูแลสุขภาพประจำตัวคุณ</p>
-            </div>
-          </div>
-          <button onclick="alert('กำลังเชื่อมต่อไปยัง LINE Official ของโค้ชผู้เชี่ยวชาญ')" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1">
-            <i class="ph ph-chat-circle"></i> ปรึกษาโค้ช
+        <div class="mt-8">
+          <button onclick="goToScreen(2)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white rounded-2xl font-bold text-sm shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 transition">
+            เริ่มประเมินสุขภาพ <i class="ph ph-arrow-right font-bold"></i>
           </button>
         </div>
       </section>
 
-      <section id="tab-profile" class="p-5 space-y-6 hidden">
-        <div class="text-center py-4" id="profile-info">
-          <div class="w-20 h-20 rounded-full mx-auto border-4 border-brand-500 p-0.5 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Profile" class="w-full h-full object-cover rounded-full">
-          </div>
-          <h3 class="font-bold mt-2">กรุณาเข้าสู่ระบบ</h3>
-          <p class="text-xs text-slate-400">เพื่อเข้าถึงฟีเจอร์ทั้งหมด</p>
-          <button onclick="app.showLoginForm()" class="mt-3 px-6 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium">เข้าสู่ระบบ</button>
+      <!-- ================= 2. คำนวณค่า BMI ================= -->
+      <section id="screen-2" class="screen p-5 space-y-5 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">คำนวณค่า BMI</h2>
+          <p class="text-xs text-slate-400">รู้จักร่างกาย เพื่อดูแลได้ตรงจุด</p>
         </div>
 
-        <div class="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-2">
-          <a href="#" class="p-3 rounded-xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50">
-            <div class="flex items-center gap-3 text-sm">
-              <i class="ph ph-package text-brand-500 text-lg"></i> ประวัติการสั่งซื้ออาหารเสริม
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-slate-500 font-medium">⚖️ น้ำหนัก (กก.)</label>
+            <input type="number" id="input-weight" value="60" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-medium">📏 ส่วนสูง (ซม.)</label>
+            <input type="number" id="input-height" value="165" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
+          </div>
+          <button onclick="calcBMIAction()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow transition">คำนวณ BMI</button>
+        </div>
+
+        <!-- BMI Result Display Card -->
+        <div class="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-center space-y-3">
+          <p class="text-xs text-slate-400">ค่า BMI ของคุณ</p>
+          <div class="flex items-center justify-center gap-3">
+            <span id="display-bmi-num" class="text-4xl font-extrabold text-slate-800 dark:text-white">22.0</span>
+            <span id="display-bmi-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">ปกติ</span>
+          </div>
+          <!-- Gauge scale bar -->
+          <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full flex overflow-hidden">
+            <div class="w-1/4 bg-blue-400"></div>
+            <div class="w-1/4 bg-emerald-500"></div>
+            <div class="w-1/4 bg-amber-400"></div>
+            <div class="w-1/4 bg-rose-500"></div>
+          </div>
+          <div class="flex justify-between text-[9px] text-slate-400 px-1">
+            <span>&lt;18.5</span>
+            <span>18.5-22.9</span>
+            <span>23-24.9</span>
+            <span>&ge;25</span>
+          </div>
+          <p id="display-bmi-text" class="text-xs text-emerald-600 font-medium">อยู่ในเกณฑ์ปกติ รักษาคุณค่าสุขภาพดีต่อเนื่องนะคะ</p>
+        </div>
+
+        <button onclick="goToScreen(3)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">ทำความเข้าใจค่า BMI &gt;</button>
+      </section>
+
+      <!-- ================= 3. ทำความเข้าใจค่า BMI ================= -->
+      <section id="screen-3" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">ทำความเข้าใจค่า BMI</h2>
+          <p class="text-xs text-slate-400">BMI บอกอะไรเราได้บ้าง?</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+            <div class="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-blue-300">
+              <span>ต่ำกว่า 18.5</span>
+              <span>ผอม / น้ำหนักน้อย</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงขาดสารอาหาร ควรเพิ่มกล้ามเนื้อ</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">
+            <div class="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              <span>18.5 - 22.9</span>
+              <span>ปกติ</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">สุขภาพดี ควรรักษาระดับนี้ไว้ต่อเนื่อง</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+            <div class="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-300">
+              <span>23 - 24.9</span>
+              <span>น้ำหนักเกิน</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">เริ่มอ้วน ควรปรับพฤติกรรมการกินและออกกำลังกาย</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
+            <div class="flex items-center justify-between text-xs font-bold text-orange-700 dark:text-orange-300">
+              <span>25 - 29.9</span>
+              <span>อ้วน</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงโรคเรื้อรัง ควรลดน้ำหนักอย่างถูกวิธี</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-rose-200 bg-rose-50/50 dark:bg-rose-950/20">
+            <div class="flex items-center justify-between text-xs font-bold text-rose-700 dark:text-rose-300">
+              <span>30 ขึ้นไป</span>
+              <span>อ้วนมาก</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงต่อโรคร้ายแรง ควรปรึกษาแพทย์หรือผู้เชี่ยวชาญ</p>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(4)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow mt-2">ถัดไป: สนใจดูแลสุขภาพกับเรา</button>
+      </section>
+
+      <!-- ================= 4. สนใจดูแลสุขภาพกับเรา (สมัครรับข้อมูล) ================= -->
+      <section id="screen-4" class="screen p-5 space-y-5 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">สนใจดูแลสุขภาพกับเรา</h2>
+          <p class="text-xs text-slate-400">กรอกข้อมูลเพื่อรับคำแนะนำและข้อมูลเพิ่มเติม</p>
+        </div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label class="text-xs font-medium text-slate-500">💬 LINE ID</label>
+            <input type="text" placeholder="กรอก LINE ID" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500">📞 เบอร์โทรศัพท์</label>
+            <input type="tel" placeholder="กรอกเบอร์โทรศัพท์" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500">✉️ อีเมล</label>
+            <input type="email" placeholder="กรอกอีเมล" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+          </div>
+        </div>
+
+        <button onclick="submitContactForm()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ส่งข้อมูล</button>
+        <p class="text-[10px] text-center text-slate-400">ข้อมูลของคุณจะถูกเก็บเป็นความลับ และใช้เพื่อการดูแลสุขภาพเท่านั้น</p>
+      </section>
+
+      <!-- ================= 5. Mini Challenge ================= -->
+      <section id="screen-5" class="screen p-5 space-y-5 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">Mini Challenge</h2>
+          <p class="text-xs text-slate-400">ดูแลตัวเอง...ทำได้ทุกวัน</p>
+        </div>
+
+        <div class="p-3 bg-sky-50 dark:bg-slate-800 rounded-2xl flex items-center gap-3 border border-sky-100 dark:border-slate-700">
+          <div class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden shrink-0">
+            <img id="coach-photo-5" src="https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=100" class="w-full h-full object-cover" alt="Coach">
+          </div>
+          <div>
+            <p id="coach-name-5" class="text-xs font-bold">สวัสดีค่ะ โค้ชแอน</p>
+            <p class="text-[10px] text-slate-400">ผู้เชี่ยวชาญ SKM.WELLNESS</p>
+          </div>
+        </div>
+
+        <div class="space-y-2.5">
+          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+            <input type="checkbox" id="check-0" class="w-4 h-4 text-sky-600 rounded">
+            <span class="text-xs">กินอาหารครบ 3 มื้อ (ไม่ข้ามมื้อ)</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+            <input type="checkbox" id="check-1" class="w-4 h-4 text-sky-600 rounded">
+            <span class="text-xs">ออกกำลังกายอย่างน้อย 10 นาที</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+            <input type="checkbox" id="check-2" class="w-4 h-4 text-sky-600 rounded">
+            <span class="text-xs">ดื่มน้ำให้ครบ 8 แก้ว / วัน</span>
+          </label>
+        </div>
+
+        <div>
+          <p class="text-xs font-bold mb-2">เลือกระยะเวลาของชาเลนจ์</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setChallengeDays(3)" id="btn-day-3" class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-center hover:border-sky-600 transition">
+              <span class="text-lg">🥉</span>
+              <p class="text-xs font-bold mt-1">3 วัน</p>
+            </button>
+            <button onclick="setChallengeDays(7)" id="btn-day-7" class="p-3 border-2 border-sky-600 bg-sky-50 dark:bg-slate-800 rounded-2xl text-center transition">
+              <span class="text-lg">🥈</span>
+              <p class="text-xs font-bold mt-1 text-sky-600">7 วัน</p>
+            </button>
+            <button onclick="setChallengeDays(30)" id="btn-day-30" class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-center hover:border-sky-600 transition">
+              <span class="text-lg">🥇</span>
+              <p class="text-xs font-bold mt-1">30 วัน</p>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(6)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ต่อไป: เลือกรองรับสรีระ</button>
+      </section>
+
+      <!-- ================= 6. เลือกรองรับสรีระของคุณตาม BMI ================= -->
+      <section id="screen-6" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">เลือกรูปร่างของคุณ</h2>
+          <p class="text-xs text-slate-400">เลื่อน ซ้าย-ขวา เพื่อดูการเปลี่ยนแปลง</p>
+        </div>
+
+        <div class="py-6 flex items-center justify-center gap-4">
+          <div class="w-20 text-center opacity-40 scale-90">
+            <div id="shape-thin" class="h-36 bg-slate-200 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden">
+              🧍‍♀️
+            </div>
+            <p class="text-[10px] mt-2">ผอม</p>
+            <p id="shape-thin-size" class="text-[9px] text-slate-400"></p>
+          </div>
+          <div class="w-28 text-center scale-110">
+            <div id="shape-normal" class="h-44 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden">
+              🏃‍♀️
+            </div>
+            <span class="inline-block mt-2 px-2 py-0.5 bg-sky-600 text-white text-[10px] font-bold rounded-full">BMI 22.0 (ปกติ)</span>
+            <p id="shape-normal-size" class="text-[9px] text-slate-400 mt-1"></p>
+          </div>
+          <div class="w-20 text-center opacity-40 scale-90">
+            <div id="shape-fat" class="h-36 bg-slate-200 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden">
+              🧘‍♀️
+            </div>
+            <p class="text-[10px] mt-2">อ้วน</p>
+            <p id="shape-fat-size" class="text-[9px] text-slate-400"></p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center text-xs">
+          รูปร่างของคุณในปัจจุบัน: <b>น้ำหนัก 60 กก. | ส่วนสูง 165 ซม.</b>
+        </div>
+
+        <button onclick="goToScreen(7)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดูการจำลองผลลัพธ์</button>
+      </section>
+
+      <!-- ================= 7. จำลองผลลัพธ์การเปลี่ยนแปลง ================= -->
+      <section id="screen-7" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">จำลองผลลัพธ์การเปลี่ยนแปลง</h2>
+          <p class="text-xs text-slate-400">เห็นผลลัพธ์ก่อนเริ่มจริง</p>
+        </div>
+
+        <div class="flex justify-center gap-2">
+          <button class="px-4 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700">7 วัน</button>
+          <button class="px-4 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700">14 วัน</button>
+          <button class="px-4 py-1.5 rounded-full text-xs font-bold bg-sky-600 text-white">30 วัน</button>
+        </div>
+
+        <div class="flex items-center justify-center gap-6 py-4">
+          <div class="text-center">
+            <div class="w-20 h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">🧍‍♀️</div>
+            <span class="text-xs text-slate-400 mt-1 block">ก่อนเริ่ม</span>
+          </div>
+          <i class="ph ph-arrow-right text-sky-600 text-xl font-bold"></i>
+          <div class="text-center">
+            <div class="w-20 h-32 bg-sky-100 dark:bg-sky-950/40 border border-sky-500 rounded-2xl flex items-center justify-center text-3xl">💃</div>
+            <span class="text-xs text-sky-600 font-bold mt-1 block">หลัง 30 วัน</span>
+          </div>
+        </div>
+
+        <!-- Simulated Trend Graph Chart Placeholder -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-center text-xs mb-2">
+            <span class="font-bold">📉 การลดน้ำหนัก & ไขมัน</span>
+            <span class="text-[10px] text-sky-600">● น้ำหนัก (กก.)  ○ ไขมัน (%)</span>
+          </div>
+          <div class="h-20 flex items-end justify-between px-2 pt-2 border-b border-l border-slate-300 dark:border-slate-600 text-[10px] text-slate-400">
+            <span>60kg</span>
+            <span>58kg</span>
+            <span>56kg</span>
+            <span>54kg</span>
+            <span class="font-bold text-sky-600">52kg</span>
+          </div>
+          <div class="flex justify-between text-[9px] text-slate-400 mt-1 px-1">
+            <span>วันที่ 1</span>
+            <span>วันที่ 7</span>
+            <span>วันที่ 14</span>
+            <span>วันที่ 21</span>
+            <span>วันที่ 30</span>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(8)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ตั้งเป้าหมายของคุณ</button>
+      </section>
+
+      <!-- ================= 8. ตั้งเป้าหมายของคุณ ================= -->
+      <section id="screen-8" class="screen p-5 space-y-5 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">ตั้งเป้าหมายของคุณ</h2>
+          <p class="text-xs text-slate-400">เริ่มจากสิ่งที่คุณอยากเป็น</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500">🎯 น้ำหนักเป้าหมาย (กก.)</label>
+            <input type="number" id="target-weight-input" value="52" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold outline-none">
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-slate-500">👗 สัดส่วนเป้าหมาย</label>
+            <select class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+              <option>กระชับสัดส่วน / ลีนหน้าท้อง</option>
+              <option>ลดสะโพกและต้นขา</option>
+              <option>สร้างร่อง 11 และกล้ามเนื้อ</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-slate-500">⏱️ ระยะเวลา</label>
+            <select class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+              <option>30 วัน</option>
+              <option>60 วัน</option>
+              <option>90 วัน</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="saveGoalAndGo()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">บันทึกเป้าหมาย</button>
+        <p class="text-center text-xs text-slate-400">"เป้าหมายที่ดี คือจุดเริ่มต้นของความสำเร็จ"</p>
+      </section>
+
+      <!-- ================= 9. แชร์เป้าหมายของฉัน ================= -->
+      <section id="screen-9" class="screen p-5 space-y-4 hidden text-center">
+        <h2 class="text-xl font-bold">แชร์เป้าหมายของฉัน</h2>
+        <p class="text-xs text-slate-400">ให้กำลังใจตัวเอง และคนรอบข้าง</p>
+
+        <!-- Shareable Virtual Card -->
+        <div class="p-6 rounded-3xl bg-gradient-to-b from-sky-50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-sky-100 dark:border-slate-700 shadow-sm text-center relative">
+          <div class="w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-md">
+            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300" class="w-full h-full object-cover" alt="User">
+          </div>
+          <h3 class="font-extrabold text-lg mt-3">เป้าหมายของฉัน</h3>
+          <p class="text-sky-600 font-bold text-xl">ลดน้ำหนัก 8 กก. ภายใน 30 วัน</p>
+
+          <div class="flex justify-center gap-6 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px]">น้ำหนักปัจจุบัน</span>
+              <b class="text-base">60 กก.</b>
+            </div>
+            <div class="border-r border-slate-200 dark:border-slate-700"></div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">เป้าหมาย</span>
+              <b class="text-base text-sky-600">52 กก.</b>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between text-[10px] text-slate-400">
+            <span>SKM.WELLNESS</span>
+            <span>QR ติดตามผล</span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <button onclick="goToScreen(10)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดาวน์โหลดรูปภาพ</button>
+          <button onclick="goToScreen(10)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">แชร์ไปยังโซเชียล</button>
+        </div>
+      </section>
+
+      <!-- ================= 10. ความรู้สุขภาพ / เคล็ดลับ ================= -->
+      <section id="screen-10" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">ความรู้สุขภาพ</h2>
+          <p class="text-xs text-slate-400">เคล็ดลับดีๆ ที่อยากให้คุณรู้</p>
+        </div>
+
+        <!-- Filter Tags -->
+        <div class="flex gap-2 text-xs overflow-x-auto no-scrollbar pb-1">
+          <span class="px-3 py-1 rounded-full bg-sky-600 text-white font-medium shrink-0">ทั้งหมด</span>
+          <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0">โภชนาการ</span>
+          <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0">ออกกำลังกาย</span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl flex gap-3 border border-slate-200 dark:border-slate-700">
+            <div class="w-16 h-16 rounded-xl bg-amber-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0">🥗</div>
+            <div>
+              <h4 class="font-bold text-xs">สัดส่วนอาหาร 2:1:1 กินอย่างไรให้ได้ผล</h4>
+              <p class="text-[10px] text-slate-400 mt-1">เทคนิคคุมแป้ง เพิ่มไฟเบอร์ ไม่ต้องอดอาหาร</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl flex gap-3 border border-slate-200 dark:border-slate-700">
+            <div class="w-16 h-16 rounded-xl bg-blue-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0">💧</div>
+            <div>
+              <h4 class="font-bold text-xs">ดื่มน้ำอย่างไรให้พอ และเผาผลาญดี</h4>
+              <p class="text-[10px] text-slate-400 mt-1">วิธีจิบน้ำระหว่างวันเพื่อช่วยกระตุ้นระบบเผาผลาญ</p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl flex gap-3 border border-slate-200 dark:border-slate-700">
+            <div class="w-16 h-16 rounded-xl bg-rose-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0">🏃‍♀️</div>
+            <div>
+              <h4 class="font-bold text-xs">ท่าออกกำลังกายง่ายๆ ที่ทำได้ทุกวัน</h4>
+              <p class="text-[10px] text-slate-400 mt-1">ขยับวันละ 10-15 นาที สลายไขมันสะสม</p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(11)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">อ่านเรื่องราวผู้ใช้จริง</button>
+      </section>
+
+      <!-- ================= 11. เรื่องราวจากผู้ใช้จริง ================= -->
+      <section id="screen-11" class="screen p-5 space-y-4 hidden text-center">
+        <h2 class="text-xl font-bold">เรื่องราวจากผู้ใช้จริง</h2>
+        <p class="text-xs text-slate-400">ผลลัพธ์ที่สร้างแรงบันดาลใจ</p>
+
+        <div class="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div class="flex justify-center items-center gap-4">
+            <div class="w-24 h-36 bg-slate-200 dark:bg-slate-700 rounded-2xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150" class="w-full h-full object-cover" alt="Before">
+            </div>
+            <i class="ph ph-arrow-right text-sky-600 text-lg font-bold"></i>
+            <div class="w-24 h-36 bg-slate-200 dark:bg-slate-700 rounded-2xl overflow-hidden border-2 border-sky-600">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="w-full h-full object-cover" alt="After">
+            </div>
+          </div>
+          <p class="text-xs italic text-slate-600 dark:text-slate-300">"จากคนที่เคยท้อ... วันนี้สุขภาพดีขึ้น น้ำหนักลดลง 12 กก. ใน 3 เดือน ขอบคุณ SKM.WELLNESS ค่ะ"</p>
+          <div>
+            <h4 class="font-bold text-sm">คุณกิ๊ฟ</h4>
+            <span class="text-[10px] text-slate-400">อายุ 32 ปี</span>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(12)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดูเรื่องราวเพิ่มเติม &gt;</button>
+      </section>
+
+      <!-- ================= 12. ช่องทางติดต่อเรา ================= -->
+      <section id="screen-12" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">ติดต่อเรา</h2>
+          <p class="text-xs text-slate-400">พร้อมดูแลคุณเสมอ</p>
+        </div>
+
+        <div class="space-y-3">
+          <a href="#" class="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/60 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl">💬</div>
+              <div>
+                <p class="font-bold text-xs">LINE Official</p>
+                <p class="text-[10px] text-slate-400">เพิ่มเพื่อนใน LINE ทันที</p>
+              </div>
             </div>
             <i class="ph ph-caret-right text-slate-400"></i>
           </a>
-          <a href="#" class="p-3 rounded-xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50">
-            <div class="flex items-center gap-3 text-sm">
-              <i class="ph ph-bell-ringing text-brand-500 text-lg"></i> ตั้งเวลาแจ้งเตือนทานผลิตภัณฑ์
+
+          <a href="#" class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xl">📞</div>
+              <div>
+                <p class="font-bold text-xs">โทร 02-xxx-xxxx</p>
+                <p class="text-[10px] text-slate-400">จันทร์ - ศุกร์ 9:00 - 18:00 น.</p>
+              </div>
             </div>
             <i class="ph ph-caret-right text-slate-400"></i>
           </a>
-          <a href="#" class="p-3 rounded-xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50">
-            <div class="flex items-center gap-3 text-sm">
-              <i class="ph ph-phone text-brand-500 text-lg"></i> ติดต่อศูนย์ลูกค้าสัมพันธ์
+
+          <a href="#" class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl">✉️</div>
+              <div>
+                <p class="font-bold text-xs">อีเมล</p>
+                <p class="text-[10px] text-slate-400">support@skm.wellness</p>
+              </div>
             </div>
             <i class="ph ph-caret-right text-slate-400"></i>
           </a>
+        </div>
+
+        <div class="p-4 bg-sky-50 dark:bg-slate-800 rounded-2xl text-center">
+          <p class="text-xs font-bold text-sky-700 dark:text-sky-300">มีคำถาม? ทักมาได้เลยค่ะ 💙</p>
+        </div>
+
+        <button onclick="goToScreen(13)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">เข้าสู่การเลือกเส้นทางสุขภาพ</button>
+      </section>
+
+      <!-- ================= 13. เลือกเส้นทางที่ใช่สำหรับคุณ (3 กลุ่มที่ระบุ) ================= -->
+      <section id="screen-13" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">เลือกเส้นทางที่ใช่สำหรับคุณ</h2>
+          <p class="text-xs text-slate-400">เรามีโปรแกรมที่เหมาะกับคุณ</p>
+        </div>
+
+        <div class="space-y-3">
+          <!-- กลุ่ม 1: คนผอมแล้วอยากหุ่นดี -->
+          <div onclick="selectTrack(1)" class="cursor-pointer p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 hover:border-sky-600 bg-white dark:bg-slate-800 transition flex items-center gap-4 shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-2xl flex items-center justify-center shrink-0">
+              🧍‍♀️
+            </div>
+            <div>
+              <span class="text-[10px] font-bold text-amber-600">ทางเลือกที่ 1</span>
+              <h4 class="font-bold text-xs mt-0.5">คนผอมแล้วอยากหุ่นดี</h4>
+              <p class="text-[10px] text-slate-400">กระชับสัดส่วน เสริมความมั่นใจ เพิ่มมวลกล้ามเนื้อ</p>
+            </div>
+          </div>
+
+          <!-- กลุ่ม 2: คนอ้วนแล้วอยากผอม -->
+          <div onclick="selectTrack(2)" class="cursor-pointer p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 hover:border-sky-600 bg-white dark:bg-slate-800 transition flex items-center gap-4 shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-950/40 text-2xl flex items-center justify-center shrink-0">
+              🏃‍♀️
+            </div>
+            <div>
+              <span class="text-[10px] font-bold text-sky-600">ทางเลือกที่ 2</span>
+              <h4 class="font-bold text-xs mt-0.5">คนอ้วนแล้วอยากผอม</h4>
+              <p class="text-[10px] text-slate-400">ลดน้ำหนัก สร้างรูปร่างใหม่ สลายไขมันสะสม</p>
+            </div>
+          </div>
+
+          <!-- กลุ่ม 3: คนอ้วนมีโรค แล้วอยากสุขภาพดี -->
+          <div onclick="selectTrack(3)" class="cursor-pointer p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 hover:border-sky-600 bg-white dark:bg-slate-800 transition flex items-center gap-4 shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-950/40 text-2xl flex items-center justify-center shrink-0">
+              🩺
+            </div>
+            <div>
+              <span class="text-[10px] font-bold text-purple-600">ทางเลือกที่ 3</span>
+              <h4 class="font-bold text-xs mt-0.5">คนอ้วนมีโรค และอยากผอมสุขภาพดี</h4>
+              <p class="text-[10px] text-slate-400">ดูแลฟื้นฟูสุขภาพ คุมระดับน้ำตาลและความดัน ปลอดภัย</p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="goToScreen(14)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ต่อไป: เลือกโปรแกรม</button>
+      </section>
+
+      <!-- ================= 14. เลือกโปรแกรมที่สนใจ ================= -->
+      <section id="screen-14" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">เลือกโปรแกรมที่สนใจ</h2>
+          <p class="text-xs text-slate-400">เพื่อรับคำแนะนำจากโค้ช</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center text-lg">🎽</div>
+              <div>
+                <p class="font-bold text-xs">โปรแกรมลดน้ำหนัก (ทั่วไป)</p>
+                <p class="text-[10px] text-slate-400">ปรับสมดุลการเผาผลาญ</p>
+              </div>
+            </div>
+            <button onclick="selectProgram(1, 'โปรแกรมลดน้ำหนัก (ทั่วไป)')" class="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-xl font-bold">เลือก</button>
+          </div>
+
+          <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg">🧘</div>
+              <div>
+                <p class="font-bold text-xs">โปรแกรมปรับรูปร่าง (กระชับสัดส่วน)</p>
+                <p class="text-[10px] text-slate-400">สร้างกล้ามเนื้อและลีนไขมัน</p>
+              </div>
+            </div>
+            <button onclick="selectProgram(2, 'โปรแกรมปรับรูปร่าง (กระชับสัดส่วน)')" class="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-xl font-bold">เลือก</button>
+          </div>
+
+          <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500 text-white flex items-center justify-center text-lg">💜</div>
+              <div>
+                <p class="font-bold text-xs">โปรแกรมสุขภาพดี (สำหรับผู้มีโรค)</p>
+                <p class="text-[10px] text-slate-400">ปลอดภัยภายใต้คำแนะนำแพทย์</p>
+              </div>
+            </div>
+            <button onclick="selectProgram(3, 'โปรแกรมสุขภาพดี (สำหรับผู้มีโรค)')" class="text-xs bg-sky-600 text-white px-3 py-1.5 rounded-xl font-bold">เลือก</button>
+          </div>
+        </div>
+
+        <p class="text-center text-[10px] text-slate-400">กรุณาใส่รหัสของโค้ช เพื่อเริ่มรับโปรแกรม</p>
+      </section>
+
+      <!-- ================= 15. ใส่รหัสโค้ช ================= -->
+      <section id="screen-15" class="screen p-5 space-y-5 hidden text-center">
+        <h2 class="text-xl font-bold">ใส่รหัสโค้ช</h2>
+        <p class="text-xs text-slate-400">เพื่อรับคำแนะนำเฉพาะบุคคล</p>
+
+        <div class="py-4">
+          <input type="text" id="coach-code" placeholder="รหัสโค้ช 6 หลัก (เช่น SKM123)" class="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-sky-400 text-center font-bold tracking-widest text-lg uppercase outline-none focus:ring-2 focus:ring-sky-500">
+          <p class="text-[10px] text-slate-400 mt-2">ตัวอย่าง : SKM123</p>
+        </div>
+
+        <button onclick="verifyCoachCode()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ยืนยันรหัสโค้ช</button>
+        <p class="text-xs text-slate-400">หากยังไม่มีรหัสโค้ช สามารถติดต่อทีมงานได้ที่ LINE / โทร / อีเมล</p>
+      </section>
+
+      <!-- ================= 16. ข้อมูลโค้ช ================= -->
+      <section id="screen-16" class="screen p-5 space-y-5 hidden text-center">
+        <h2 class="text-xl font-bold">ข้อมูลโค้ช</h2>
+        <p class="text-xs text-slate-400">ผู้ดูแลคุณตลอดเส้นทาง</p>
+
+        <div class="w-28 h-28 rounded-full mx-auto border-4 border-sky-500 overflow-hidden shadow-lg">
+          <img id="coach-photo-16" src="https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300" class="w-full h-full object-cover" alt="Coach">
+        </div>
+
+        <div>
+          <h3 id="coach-name-16" class="font-bold text-base">โค้ชแอน</h3>
+          <p id="coach-title-16" class="text-xs text-slate-400">SKM.WELLNESS COACH</p>
+          <p id="coach-quote-16" class="text-xs italic text-slate-600 dark:text-slate-300 mt-2 bg-sky-50 dark:bg-slate-800 p-3 rounded-2xl">
+            "ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้"
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <button id="coach-line-btn" class="w-full py-3 bg-emerald-500 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2">
+            <i class="ph ph-chat-circle text-lg"></i> เพิ่มเพื่อน LINE
+          </button>
+          <button id="coach-phone-btn" class="w-full py-3 bg-sky-600 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2">
+            <i class="ph ph-phone text-lg"></i> โทรหาผู้ดูแล
+          </button>
+          <button onclick="goToScreen(17)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs">
+            ดูโปรแกรมโดยรวม &gt;
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= 17. ภาพรวมการใช้งาน ================= -->
+      <section id="screen-17" class="screen p-5 space-y-4 hidden">
+        <div class="text-center">
+          <h2 class="text-xl font-bold">เส้นทางการดูแลสุขภาพ</h2>
+          <p class="text-xs text-slate-400">ไปด้วยกันกับ SKM.WELLNESS</p>
+        </div>
+
+        <div class="space-y-3 py-2">
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">1</span>
+            <div>
+              <p class="text-xs font-bold">ประเมินสุขภาพ</p>
+              <p class="text-[10px] text-slate-400">รู้จักตัวเองผ่าน BMI</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">2</span>
+            <div>
+              <p class="text-xs font-bold">ตั้งเป้าหมาย</p>
+              <p class="text-[10px] text-slate-400">พร้อมวางแผนร่วมกัน</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">3</span>
+            <div>
+              <p class="text-xs font-bold">ดูแลตัวเอง</p>
+              <p class="text-[10px] text-slate-400">ด้วย Mini Challenge ต่อเนื่อง</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">4</span>
+            <div>
+              <p class="text-xs font-bold">ติดตามผลลัพธ์</p>
+              <p class="text-[10px] text-slate-400">เห็นการเปลี่ยนแปลงที่ชัดเจน</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <span class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">5</span>
+            <div>
+              <p class="text-xs font-bold">รับคำปรึกษาจากโค้ช</p>
+              <p class="text-[10px] text-slate-400">อย่างใกล้ชิดและใส่ใจ</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center pt-2">
+          <p class="text-xs font-bold text-sky-600">สุขภาพดี... เริ่มได้วันนี้ 💙</p>
+          <p class="text-[10px] text-slate-400 mt-1">สูตรคุณหมอ | SKM.WELLNESS</p>
+          <button onclick="goToScreen(1)" class="mt-4 px-6 py-2.5 bg-sky-600 text-white rounded-full text-xs font-bold">กลับหน้าแรก</button>
         </div>
       </section>
 
     </main>
 
-    <div id="order-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden">
-      <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-t-3xl p-6 space-y-4">
-        <div class="flex justify-between items-center border-b pb-3 dark:border-slate-700">
-          <h3 class="font-bold text-base" id="modal-title">สั่งซื้อ / ลงทะเบียนทดลอง</h3>
-          <button onclick="app.closeOrderModal()" class="text-slate-400 hover:text-slate-600"><i class="ph ph-x text-lg"></i></button>
-        </div>
-        <form onsubmit="app.handleOrderSubmit(event)" class="space-y-3">
-          <input type="hidden" id="order-product-id">
-          <div>
-            <label class="text-xs text-slate-500">ชื่อ-นามสกุล</label>
-            <input required type="text" id="order-name" class="w-full mt-1 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600 text-sm">
-          </div>
-          <div>
-            <label class="text-xs text-slate-500">เบอร์โทรศัพท์ / LINE ID</label>
-            <input required type="text" id="order-contact" class="w-full mt-1 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600 text-sm">
-          </div>
-          <div>
-            <label class="text-xs text-slate-500">ประเภทการรับสินค้า</label>
-            <div class="grid grid-cols-2 gap-2 mt-1">
-              <label class="border p-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 dark:has-[:checked]:bg-brand-900/30">
-                <input type="radio" name="order_type" value="trial" checked class="text-brand-600"> ชุดทดลอง 7 วัน
-              </label>
-              <label class="border p-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 dark:has-[:checked]:bg-brand-900/30">
-                <input type="radio" name="order_type" value="full" class="text-brand-600"> คอร์สเต็ม 30 วัน
-              </label>
-            </div>
-          </div>
-          <button type="submit" class="w-full py-3 bg-brand-600 text-white rounded-xl font-bold text-sm shadow mt-2 hover:bg-brand-700">ยืนยันข้อมูล</button>
-        </form>
-      </div>
-    </div>
+    <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-30">
+      <div class="grid grid-cols-4 h-16 items-center px-1">
 
-    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-100 dark:border-slate-700 z-30">
-      <div class="grid grid-cols-4 h-16">
-        <button onclick="app.switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center justify-center gap-1 text-brand-600 dark:text-brand-500 transition">
-          <i class="ph ph-house text-xl"></i>
-          <span class="text-[11px] font-medium">หน้าแรก</span>
-        </button>
-        <button onclick="app.switchTab('products')" id="nav-products" class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
-          <i class="ph ph-pill text-xl"></i>
-          <span class="text-[11px] font-medium">ผลิตภัณฑ์</span>
-        </button>
-        <button onclick="app.switchTab('tracker')" id="nav-tracker" class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
-          <i class="ph ph-chart-line-up text-xl"></i>
-          <span class="text-[11px] font-medium">ติดตามผล</span>
-        </button>
-        <button onclick="app.switchTab('profile')" id="nav-profile" class="nav-btn flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
-          <div class="w-5 h-5 rounded-full overflow-hidden border border-slate-300 dark:border-slate-500">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60" alt="Avatar" class="w-full h-full object-cover">
+        <!-- เมนู 1: หน้าแรก -->
+        <button onclick="goToScreen(1)" id="bnav-1" class="flex flex-col items-center justify-center gap-1 text-sky-600 dark:text-sky-400 transition">
+          <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ph ph-house text-xl"></i>
           </div>
-          <span class="text-[11px] font-medium">โปรไฟล์</span>
+          <span class="text-[10px] font-semibold">หน้าแรก</span>
         </button>
+
+        <!-- เมนู 2: ประเมิน / ชาเลนจ์ -->
+        <button onclick="goToScreen(5)" id="bnav-2" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ph ph-check-circle text-xl"></i>
+          </div>
+          <span class="text-[10px] font-semibold">ภารกิจ</span>
+        </button>
+
+        <!-- เมนู 3: ติดตามผลลัพธ์ -->
+        <button onclick="goToScreen(7)" id="bnav-3" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ph ph-chart-line text-xl"></i>
+          </div>
+          <span class="text-[10px] font-semibold">ผลลัพธ์</span>
+        </button>
+
+        <!-- เมนู 4: ช่องทางติดต่อ / โปรไฟล์ -->
+        <button onclick="goToScreen(16)" id="bnav-4" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <div class="w-6 h-6 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+            <img id="coach-photo-nav" src="https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=64" class="w-full h-full object-cover" alt="Coach Avatar">
+          </div>
+          <span class="text-[10px] font-semibold">โค้ช</span>
+        </button>
+
       </div>
     </nav>
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- Settings Modal for Logo & Background Upload -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+        <h3 class="text-lg font-bold">ตั้งค่าระบบ</h3>
+        <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
 
-  <!-- PWA Service Worker Registration -->
+      <!-- Logo Upload -->
+      <div class="space-y-2">
+        <label class="text-sm font-bold flex items-center gap-2">
+          <i class="ph ph-image text-sky-600"></i> อัปโหลดโลโก้
+        </label>
+        <p class="text-xs text-slate-400">ขนาดแนะนำ: 512x512 px | สูงสุด 2 MB</p>
+        <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-4 text-center">
+          <input type="file" id="logo-upload" accept="image/jpeg,image/png,image/webp,image/svg+xml" class="hidden" onchange="handleLogoUpload(event)">
+          <button onclick="document.getElementById('logo-upload').click()" class="px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold">
+            เลือกไฟล์โลโก้
+          </button>
+          <p class="text-xs text-slate-400 mt-2">JPG, PNG, WebP, SVG</p>
+        </div>
+        <div id="logo-preview" class="hidden mt-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl flex items-center gap-3">
+          <img id="logo-preview-img" src="" class="w-12 h-12 object-cover rounded-lg">
+          <div class="flex-1 text-xs">
+            <p class="font-bold">โลโก้ปัจจุบัน</p>
+            <button onclick="removeLogo()" class="text-rose-600 mt-1">ลบออก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Background Upload -->
+      <div class="space-y-2">
+        <label class="text-sm font-bold flex items-center gap-2">
+          <i class="ph ph-image-square text-sky-600"></i> อัปโหลดพื้นหลังหน้าแรก
+        </label>
+        <p class="text-xs text-slate-400">ขนาดแนะนำ: 1080x1920 px (แนวตั้ง) | สูงสุด 5 MB</p>
+        <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-4 text-center">
+          <input type="file" id="bg-upload" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleBgUpload(event)">
+          <button onclick="document.getElementById('bg-upload').click()" class="px-4 py-2 bg-sky-600 text-white rounded-xl text-sm font-bold">
+            เลือกไฟล์พื้นหลัง
+          </button>
+          <p class="text-xs text-slate-400 mt-2">JPG, PNG, WebP</p>
+        </div>
+        <div id="bg-preview" class="hidden mt-2 p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
+          <div class="w-full h-32 rounded-lg overflow-hidden">
+            <img id="bg-preview-img" src="" class="w-full h-full object-cover">
+          </div>
+          <button onclick="removeBackground()" class="text-rose-600 text-xs mt-2">ลบพื้นหลัง</button>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+        <p class="text-center text-[10px] text-slate-400 mt-1">สูตรคุณหมอ | SKM.WELLNESS</p>
+        <a href="coach-login.html" class="block text-center text-[9px] text-slate-300 dark:text-slate-600 mt-1 hover:text-sky-600">Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Logic Engine -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Service Worker registered'))
-          .catch(err => console.log('Service Worker registration failed'));
+    let currentScreen = 1;
+    const historyStack = [];
+
+    function goToScreen(screenNumber) {
+      if (currentScreen !== screenNumber) {
+        historyStack.push(currentScreen);
+      }
+      currentScreen = screenNumber;
+
+      document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
+
+      const target = document.getElementById(`screen-${screenNumber}`);
+      if (target) {
+        target.classList.remove('hidden');
+      }
+
+
+      const backBtn = document.getElementById('header-back-btn');
+      if (screenNumber === 1) {
+        backBtn.classList.add('hidden');
+      } else {
+        backBtn.classList.remove('hidden');
+      }
+
+      updateBottomBar(screenNumber);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Track page view
+      backend.trackPageView(screenNumber);
+    }
+
+    function goBack() {
+      if (historyStack.length > 0) {
+        const prev = historyStack.pop();
+        goToScreen(prev);
+      } else {
+        goToScreen(1);
+      }
+    }
+
+    function updateBottomBar(screenNumber) {
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`bnav-${i}`);
+        btn.classList.remove('text-sky-600', 'dark:text-sky-400');
+        btn.classList.add('text-slate-400');
+      }
+
+      if ([1, 2, 3, 4].includes(screenNumber)) {
+        setActiveNav('bnav-1');
+      } else if ([5, 6, 8, 9].includes(screenNumber)) {
+        setActiveNav('bnav-2');
+      } else if ([7, 10, 11, 13, 14, 17].includes(screenNumber)) {
+        setActiveNav('bnav-3');
+      } else if ([12, 15, 16].includes(screenNumber)) {
+        setActiveNav('bnav-4');
+      }
+    }
+
+    function setActiveNav(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('text-slate-400');
+        el.classList.add('text-sky-600', 'dark:text-sky-400');
+      }
+    }
+
+    function calcBMIAction() {
+      const w = parseFloat(document.getElementById('input-weight').value);
+      const h = parseFloat(document.getElementById('input-height').value);
+
+      if (!w || !h) {
+        backend.showToast('กรุณากรอกน้ำหนักและส่วนสูงให้ครบถ้วน', 'error');
+        return;
+      }
+
+      const result = backend.calculateBMI(w, h);
+
+      document.getElementById('display-bmi-num').innerText = result.bmi;
+
+      const badge = document.getElementById('display-bmi-badge');
+      badge.innerText = result.category;
+      badge.className = `px-3 py-1 rounded-full text-xs font-bold bg-${result.color}-100 text-${result.color}-700`;
+
+      const text = document.getElementById('display-bmi-text');
+      text.innerText = result.message;
+      text.className = `text-xs text-${result.color}-600 font-medium`;
+    }
+
+    function setChallengeDays(days) {
+      [3, 7, 30].forEach(d => {
+        const btn = document.getElementById(`btn-day-${d}`);
+        btn.classList.remove('border-sky-600', 'bg-sky-50', 'dark:bg-slate-800');
+      });
+      const active = document.getElementById(`btn-day-${days}`);
+      active.classList.add('border-sky-600', 'bg-sky-50', 'dark:bg-slate-800');
+
+      // Save to backend
+      const tasks = ['กินอาหารครบ 3 มื้อ', 'ออกกำลังกายอย่างน้อย 10 นาที', 'ดื่มน้ำให้ครบ 8 แก้ว'];
+      backend.saveChallenge(days, tasks);
+    }
+
+    // Settings Modal Functions
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+      loadSettingsPreviews();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function loadSettingsPreviews() {
+      const logoUrl = localStorage.getItem('app_logo_url');
+      if (logoUrl) {
+        document.getElementById('logo-preview').classList.remove('hidden');
+        document.getElementById('logo-preview-img').src = logoUrl;
+      }
+
+      const bgUrl = localStorage.getItem('home_bg_url');
+      if (bgUrl) {
+        document.getElementById('bg-preview').classList.remove('hidden');
+        document.getElementById('bg-preview-img').src = bgUrl;
+      }
+    }
+
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (file) backend.uploadLogo(file);
+    }
+
+    function handleBgUpload(event) {
+      const file = event.target.files[0];
+      if (file) backend.uploadBackground(file);
+    }
+
+    function removeLogo() {
+      localStorage.removeItem('app_logo_url');
+      backend.showToast('ลบโลโก้สำเร็จ', 'success');
+      setTimeout(() => location.reload(), 500);
+    }
+
+    function removeBackground() {
+      localStorage.removeItem('home_bg_url');
+      backend.showToast('ลบพื้นหลังสำเร็จ', 'success');
+      setTimeout(() => location.reload(), 500);
+    }
+
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-btn-icon');
+
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        icon.className = 'ph ph-moon text-sm';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        icon.className = 'ph ph-sun text-sm';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Load theme on init
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('theme-btn-icon').className = 'ph ph-sun text-sm';
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      calcBMIAction();
+      loadCoachInfo();
+      loadBodyShapes();
+
+      // Load checklist status
+      document.querySelectorAll('[id^="check-"]').forEach((checkbox, index) => {
+        checkbox.checked = backend.getChecklistStatus(index);
+        checkbox.addEventListener('change', (e) => {
+          backend.updateChecklistItem(index, e.target.checked);
+        });
+      });
+    });
+
+    // Load Body Shapes
+    function loadBodyShapes() {
+      const shapes = ['thin', 'normal', 'fat'];
+
+      shapes.forEach(shape => {
+        const data = getBodyShapeData(shape);
+        if (data && data.image) {
+          const container = document.getElementById(`shape-${shape}`);
+          const sizeLabel = document.getElementById(`shape-${shape}-size`);
+
+          if (container) {
+            // Replace emoji with image
+            container.innerHTML = `<img src="${data.image}" class="w-full h-full object-cover" alt="${shape}">`;
+          }
+
+          if (sizeLabel && data.size) {
+            sizeLabel.textContent = data.size;
+          }
+        }
       });
     }
+
+    // Load Coach Information
+    function loadCoachInfo() {
+      const coach = backend.getSelectedCoach();
+      if (!coach) return;
+
+      // Update Screen 5 (Mini Challenge)
+      const coachPhoto5 = document.getElementById('coach-photo-5');
+      const coachName5 = document.getElementById('coach-name-5');
+      if (coachPhoto5) coachPhoto5.src = coach.photo;
+      if (coachName5) coachName5.textContent = `สวัสดีค่ะ ${coach.name}`;
+
+      // Update Screen 16 (Coach Info)
+      const coachPhoto16 = document.getElementById('coach-photo-16');
+      const coachName16 = document.getElementById('coach-name-16');
+      const coachTitle16 = document.getElementById('coach-title-16');
+      const coachQuote16 = document.getElementById('coach-quote-16');
+
+      if (coachPhoto16) coachPhoto16.src = coach.photo;
+      if (coachName16) coachName16.textContent = coach.name;
+      if (coachTitle16) coachTitle16.textContent = coach.title;
+      if (coachQuote16) coachQuote16.textContent = `"${coach.quote}"`;
+
+      // Update LINE and Phone buttons
+      const lineBtn = document.getElementById('coach-line-btn');
+      const phoneBtn = document.getElementById('coach-phone-btn');
+
+      if (lineBtn && coach.line) {
+        lineBtn.onclick = () => window.open(`https://line.me/R/ti/p/${coach.line.replace('@', '')}`, '_blank');
+      }
+      if (phoneBtn && coach.phone) {
+        phoneBtn.onclick = () => window.open(`tel:${coach.phone}`, '_self');
+      }
+
+      // Update Bottom Navigation Avatar
+      const coachPhotoNav = document.getElementById('coach-photo-nav');
+      if (coachPhotoNav) coachPhotoNav.src = coach.photo;
+    }
+
+    // Contact Form Handler (Screen 4)
+    function submitContactForm() {
+      const lineId = document.querySelector('input[placeholder="กรอก LINE ID"]').value;
+      const phone = document.querySelector('input[placeholder="กรอกเบอร์โทรศัพท์"]').value;
+      const email = document.querySelector('input[placeholder="กรอกอีเมล"]').value;
+
+      if (!lineId && !phone && !email) {
+        backend.showToast('กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง', 'error');
+        return;
+      }
+
+      backend.submitContactForm({ lineId, phone, email });
+      setTimeout(() => goToScreen(5), 1000);
+    }
+
+    // Goal Form Handler (Screen 8)
+    function saveGoalAndGo() {
+      const targetWeight = document.getElementById('target-weight-input').value;
+      const bodyShape = document.querySelector('select').value;
+      const duration = document.querySelectorAll('select')[1].value;
+
+      backend.saveGoal({
+        targetWeight: parseFloat(targetWeight),
+        bodyShape,
+        duration,
+        currentWeight: parseFloat(document.getElementById('input-weight').value || 60)
+      });
+
+      goToScreen(9);
+    }
+
+    // Coach Code Verification (Screen 15)
+    function verifyCoachCode() {
+      const code = document.getElementById('coach-code').value;
+      if (backend.verifyCoachCode(code)) {
+        setTimeout(() => goToScreen(16), 1000);
+      }
+    }
+
+    // Track Selection (Screen 13)
+    function selectTrack(trackId) {
+      const trackNames = {
+        1: 'คนผอมแล้วอยากหุ่นดี',
+        2: 'คนอ้วนแล้วอยากผอม',
+        3: 'คนอ้วนมีโรค และอยากผอมสุขภาพดี'
+      };
+      backend.selectTrack(trackId, trackNames[trackId]);
+      goToScreen(14);
+    }
+
+    // Program Selection (Screen 14)
+    function selectProgram(programId, programName) {
+      backend.selectProgram(programId, programName);
+      goToScreen(15);
+    }
   </script>
+
 </body>
 </html>
