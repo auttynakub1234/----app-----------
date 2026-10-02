@@ -12,15 +12,24 @@ class SKMBackend {
   // ========== INITIALIZATION ==========
   async init() {
     this.loadTheme();
-    this.loadCustomLogo();
-    this.loadCustomBackground();
+    if (typeof document !== 'undefined') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          this.loadCustomLogo();
+          this.loadCustomBackground();
+        });
+      } else {
+        this.loadCustomLogo();
+        this.loadCustomBackground();
+      }
+    }
     await this.initSupabase();
     this.loadUserData();
   }
 
   // ========== SUPABASE CONNECTION ==========
   async initSupabase() {
-    if (typeof window.supabase !== 'undefined' && APP_CONFIG.supabase.url !== 'YOUR_SUPABASE_URL') {
+    if (typeof window !== 'undefined' && typeof window.supabase !== 'undefined' && APP_CONFIG.supabase.url !== 'YOUR_SUPABASE_URL') {
       try {
         this.supabase = window.supabase.createClient(
           APP_CONFIG.supabase.url,
@@ -63,34 +72,41 @@ class SKMBackend {
       icon.className = 'ph ph-sun text-sm';
       localStorage.setItem(APP_CONFIG.theme.storageKey, 'dark');
     }
+    this.loadCustomBackground();
   }
 
   // ========== LOGO & BACKGROUND UPLOAD ==========
   loadCustomLogo() {
     const logoUrl = localStorage.getItem(APP_CONFIG.logo.storageKey);
     if (logoUrl) {
-      const logoIcon = document.querySelector('#header-brand i');
-      if (logoIcon) {
-        logoIcon.style.display = 'none';
-        const img = document.createElement('img');
+      const headerBrand = document.getElementById('header-brand');
+      if (headerBrand) {
+        const logoIcon = headerBrand.querySelector('i');
+        if (logoIcon) logoIcon.style.display = 'none';
+        let img = headerBrand.querySelector('img.custom-brand-logo');
+        if (!img) {
+          img = document.createElement('img');
+          img.className = 'w-6 h-6 object-cover rounded-full custom-brand-logo';
+          img.alt = 'Logo';
+          headerBrand.insertBefore(img, headerBrand.firstChild);
+        }
         img.src = logoUrl;
-        img.className = 'w-6 h-6 object-cover rounded-full';
-        img.alt = 'Logo';
-        logoIcon.parentElement.insertBefore(img, logoIcon);
       }
     }
   }
 
   loadCustomBackground() {
-    const bgUrl = localStorage.getItem(APP_CONFIG.background.storageKey);
-    if (bgUrl) {
-      const screen1 = document.getElementById('screen-1');
-      if (screen1) {
-        screen1.style.backgroundImage = `url(${bgUrl})`;
-        screen1.style.backgroundSize = 'cover';
-        screen1.style.backgroundPosition = 'center';
-        screen1.style.backgroundRepeat = 'no-repeat';
-      }
+    const bgUrl = localStorage.getItem(APP_CONFIG.background.storageKey) || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800';
+    const screen1 = document.getElementById('screen-1');
+    if (screen1) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gradient = isDark
+        ? 'linear-gradient(to bottom, rgba(15,23,42,0.05) 0%, rgba(15,23,42,0.3) 30%, rgba(15,23,42,0.85) 65%, rgba(15,23,42,0.98) 100%)'
+        : 'linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.85) 65%, rgba(255,255,255,0.98) 100%)';
+      screen1.style.backgroundImage = `${gradient}, url(${bgUrl})`;
+      screen1.style.backgroundSize = 'cover';
+      screen1.style.backgroundPosition = 'top center';
+      screen1.style.backgroundRepeat = 'no-repeat';
     }
   }
 
@@ -311,17 +327,45 @@ class SKMBackend {
   }
 
   // ========== COACH CODE ==========
-  verifyCoachCode(code) {
+  // ========== COACH CODE ==========
+  verifyCoachCode(inputCode) {
+    if (!inputCode || typeof inputCode !== 'string') {
+      this.showToast('กรุณากรอกรหัสโค้ช', 'error');
+      return false;
+    }
+
+    const cleanInput = inputCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
+    if (!cleanInput) {
+      this.showToast('กรุณากรอกรหัสโค้ช', 'error');
+      return false;
+    }
+
     const coaches = this.getAllCoaches();
-    const coach = coaches.find(c => c.code.toUpperCase() === code.toUpperCase());
+    const inputDigits = cleanInput.replace(/[^0-9]/g, '');
+
+    const coach = coaches.find(c => {
+      if (!c.code) return false;
+      const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
+      const cDigits = cCode.replace(/[^0-9]/g, '');
+
+      return (
+        cCode === cleanInput ||
+        cCode === 'SKM' + cleanInput ||
+        ('SKM' + cCode) === cleanInput ||
+        (inputDigits && cDigits && inputDigits === cDigits)
+      );
+    });
 
     if (coach) {
-      localStorage.setItem(APP_CONFIG.storage.coachCode, code.toUpperCase());
+      if (!coach.photo || coach.photo.endsWith('.html') || coach.photo.includes('coach-dashboard')) {
+        coach.photo = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+      }
+      localStorage.setItem(APP_CONFIG.storage.coachCode, coach.code);
       localStorage.setItem('selected_coach', JSON.stringify(coach));
-      this.showToast('ยืนยันรหัสโค้ชสำเร็จ!', 'success');
+      this.showToast(`ยืนยันรหัสโค้ชสำเร็จ! (${coach.name})`, 'success');
       return true;
     } else {
-      this.showToast('รหัสโค้ชไม่ถูกต้อง กรุณาลองใหม่', 'error');
+      this.showToast('รหัสโค้ชไม่ถูกต้อง กรุณาลองใหม่ (เช่น SKM321 หรือ SKM123)', 'error');
       return false;
     }
   }
@@ -331,32 +375,104 @@ class SKMBackend {
   }
 
   getSelectedCoach() {
-    const data = localStorage.getItem('selected_coach');
-    return data ? JSON.parse(data) : this.loadCoachData();
+    const coaches = this.getAllCoaches();
+    if (!coaches || coaches.length === 0) return null;
+
+    let selected = null;
+    const currentCode = this.getCoachCode();
+
+    // 1. If user entered a specific coach code
+    if (currentCode) {
+      const cleanCurrent = currentCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
+      const currentDigits = cleanCurrent.replace(/[^0-9]/g, '');
+      selected = coaches.find(c => {
+        if (!c.code) return false;
+        const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
+        const cDigits = cCode.replace(/[^0-9]/g, '');
+        return cCode === cleanCurrent || cCode === 'SKM' + cleanCurrent || (currentDigits && cDigits && currentDigits === cDigits);
+      });
+    }
+
+    // 2. If a coach was saved in selected_coach
+    if (!selected) {
+      const savedSelected = localStorage.getItem('selected_coach');
+      if (savedSelected) {
+        try {
+          const parsed = JSON.parse(savedSelected);
+          selected = coaches.find(c => c.id === parsed.id || (c.code && parsed.code && c.code.toUpperCase() === parsed.code.toUpperCase()));
+        } catch (e) {}
+      }
+    }
+
+    // 3. Fallback to first coach
+    if (!selected) {
+      selected = coaches[0];
+    }
+
+    // Ensure safe photo
+    if (selected) {
+      if (!selected.photo || selected.photo.endsWith('.html') || selected.photo.includes('coach-dashboard')) {
+        selected.photo = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+      }
+    }
+
+    return selected;
   }
 
   getAllCoaches() {
-    const data = localStorage.getItem('skm_coaches');
-    if (!data) {
-      // Return default coach
-      return [{
+    const defaultCoaches = [
+      {
         id: '1',
-        name: 'โค้ชแอน',
-        code: 'SKM123',
+        name: 'โค้ช Nithichai',
+        code: 'SKM321',
         title: 'SKM.WELLNESS COACH',
         quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
-        photo: 'https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300',
-        line: '@coach.ann',
+        photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+        line: '@coach.nithichai',
         phone: '02-xxx-xxxx'
-      }];
+      },
+      {
+        id: '2',
+        name: 'โค้ชแอน',
+        code: 'SKM123',
+        title: 'SKM.WELLNESS SENIOR COACH',
+        quote: 'สุขภาพดีไม่มีทางลัด มีแต่วินัยและความใส่ใจในทุกวัน',
+        photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300',
+        line: '@coach.ann',
+        phone: '081-xxx-xxxx'
+      }
+    ];
+
+    const data = localStorage.getItem('skm_coaches');
+    if (!data) {
+      localStorage.setItem('skm_coaches', JSON.stringify(defaultCoaches));
+      return defaultCoaches;
     }
-    return JSON.parse(data);
+
+    try {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        let updated = false;
+        const cleaned = parsed.map(c => {
+          if (!c.photo || c.photo.endsWith('.html') || c.photo.includes('coach-dashboard')) {
+            c.photo = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+            updated = true;
+          }
+          return c;
+        });
+        if (updated) {
+          localStorage.setItem('skm_coaches', JSON.stringify(cleaned));
+        }
+        return cleaned;
+      }
+    } catch (e) {}
+
+    return defaultCoaches;
   }
 
   loadCoachData() {
-    const coaches = this.getAllCoaches();
-    if (coaches.length > 0) {
-      const coach = coaches[0];
+    const coach = this.getSelectedCoach();
+    if (coach) {
       localStorage.setItem('selected_coach', JSON.stringify(coach));
       return coach;
     }

@@ -48,25 +48,28 @@
   <div class="w-full max-w-[420px] bg-white dark:bg-slate-900 min-h-screen shadow-2xl flex flex-col relative pb-20 overflow-x-hidden border-x border-slate-200/60 dark:border-slate-800">
 
     <!-- Top System Dynamic Bar -->
-    <header class="h-12 px-4 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-30 border-b border-slate-100 dark:border-slate-800">
+    <header class="h-12 px-4 flex items-center justify-between sticky top-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md z-30 border-b border-slate-100/50 dark:border-slate-800/50">
       <div id="header-back-btn" class="hidden">
         <button onclick="goBack()" class="p-1 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400">
           <i class="ph ph-caret-left text-xl font-bold"></i>
         </button>
       </div>
-      <div id="header-brand" class="flex items-center gap-1.5">
-        <i class="ph ph-heartbeat text-sky-600 text-xl"></i>
-        <span class="text-xs font-bold tracking-tight text-sky-700 dark:text-sky-400">SKM.WELLNESS</span>
+      <div id="header-brand" class="flex-1">
+        <!-- Brand and logo removed as requested, leaving controls only -->
       </div>
 
-      <!-- Theme Toggle + Coach Admin Link -->
-      <div class="ml-auto flex items-center gap-1.5">
-        <a href="coach-login.html" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 transition">
-          <i class="ph ph-gear text-sm"></i>
-        </a>
-        <button onclick="backend.toggleTheme()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-amber-400">
+      <!-- Controls + Floating Profile Picture on the right side -->
+      <div class="flex items-center gap-2">
+        <button onclick="backend.toggleTheme()" class="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดสี">
           <i id="theme-btn-icon" class="ph ph-moon text-sm"></i>
         </button>
+        <a href="coach-login.html" class="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 transition" title="ผู้ดูแลระบบ (Admin)">
+          <i class="ph ph-gear text-sm"></i>
+        </a>
+        <!-- Floating circular user profile on the right side -->
+        <div id="floating-profile" onclick="goToScreen(16)" class="w-8 h-8 rounded-full overflow-hidden border-2 border-sky-500 shadow-sm cursor-pointer hover:ring-2 hover:ring-sky-400 transition shrink-0" title="โปรไฟล์">
+          <img id="user-header-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover" alt="User Profile">
+        </div>
       </div>
     </header>
 
@@ -74,41 +77,68 @@
     <main class="flex-1 overflow-y-auto">
 
       <!-- ================= 1. หน้าแรก (ประเมินสุขภาพ) ================= -->
-      <section id="screen-1" class="screen p-5 flex flex-col justify-between min-h-[calc(100vh-8rem)]">
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-sky-600 font-bold text-sm tracking-wide">🩺 สูตรคุณหมอ</span>
-            <span class="text-[10px] text-slate-400">SKM.WELLNESS</span>
-          </div>
-          <h1 class="text-3xl font-extrabold leading-tight text-slate-800 dark:text-white">สุขภาพที่ดี<br><span class="text-sky-600">เริ่มจากการดูแลตัวเองวันนี้</span></h1>
-          <p class="text-xs text-slate-500 mt-2">เปลี่ยนสุขภาพทีละวัน เปลี่ยนชีวิตได้ทั้งชีวิต</p>
+      <section id="screen-1" class="screen min-h-[calc(100vh-3rem)] flex flex-col justify-end p-5 pb-6 relative overflow-hidden bg-cover bg-top bg-no-repeat transition-all duration-300" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.85) 65%, rgba(255,255,255,0.98) 100%), url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800');">
+        
+        <!-- Top Empty Space: showcases the background image (upper body of person in white top) -->
+        <div class="h-44 sm:h-56 w-full flex-1"></div>
 
-          <div class="mt-6 space-y-3">
-            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
-              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
-                <i class="ph ph-heartbeat"></i>
+        <!-- Relocated Content Block: positioned downwards just above the action button -->
+        <div class="space-y-3.5 z-10 w-full mt-auto">
+          <!-- Primary Thai Headline & Sub-headline -->
+          <div class="space-y-1">
+            <h1 class="text-2xl sm:text-3xl font-extrabold leading-tight text-slate-900 dark:text-white drop-shadow-sm">
+              สุขภาพที่ดี<br><span class="text-sky-600 dark:text-sky-400">เริ่มจากการดูแลตัวเองวันนี้</span>
+            </h1>
+            <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              เปลี่ยนสุขภาพทีละวัน เปลี่ยนชีวิตได้ทั้งชีวิต
+            </p>
+          </div>
+
+          <!-- 3 Feature List Items -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 p-2.5 bg-white/85 dark:bg-slate-800/85 backdrop-blur-md rounded-2xl border border-sky-100/80 dark:border-slate-700/80 shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <i class="ph ph-heartbeat text-sm"></i>
               </div>
-              <p class="text-xs font-medium">ดูแลสุขภาพให้ถูกจุดรายบุคคล</p>
+              <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">ดูแลสุขภาพให้ถูกจุดรายบุคคล</p>
             </div>
-            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
-              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
-                <i class="ph ph-book-open-text"></i>
+
+            <div class="flex items-center gap-3 p-2.5 bg-white/85 dark:bg-slate-800/85 backdrop-blur-md rounded-2xl border border-sky-100/80 dark:border-slate-700/80 shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <i class="ph ph-book-open-text text-sm"></i>
               </div>
-              <p class="text-xs font-medium">ข้อมูลสุขภาพที่เชื่อถือได้</p>
+              <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">ข้อมูลสุขภาพที่เชื่อถือได้</p>
             </div>
-            <div class="flex items-center gap-3 p-3 bg-sky-50 dark:bg-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700">
-              <div class="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0">
-                <i class="ph ph-sparkle"></i>
+
+            <div class="flex items-center gap-3 p-2.5 bg-white/85 dark:bg-slate-800/85 backdrop-blur-md rounded-2xl border border-sky-100/80 dark:border-slate-700/80 shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <i class="ph ph-sparkle text-sm"></i>
               </div>
-              <p class="text-xs font-medium">ทำได้จริง เห็นผลลัพธ์ยั่งยืน</p>
+              <p class="text-xs font-semibold text-slate-800 dark:text-slate-200">ทำได้จริง เห็นผลลัพธ์ยั่งยืน</p>
             </div>
           </div>
-        </div>
 
-        <div class="mt-8">
-          <button onclick="goToScreen(2)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white rounded-2xl font-bold text-sm shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 transition">
-            เริ่มประเมินสุขภาพ <i class="ph ph-arrow-right font-bold"></i>
-          </button>
+          <!-- Coach Profile Card (Coach Nithichai) -->
+          <div id="home-coach-card" class="p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-sky-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-sky-500 shrink-0 shadow">
+              <img id="coach-photo-1" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover" alt="Coach Nithichai">
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span id="coach-name-1" class="text-xs font-bold text-slate-800 dark:text-white truncate">โค้ช Nithichai</span>
+                <span id="coach-code-1" class="px-1.5 py-0.5 bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-[10px] font-bold rounded">SKM321</span>
+              </div>
+              <p id="coach-title-1" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">SKM.WELLNESS COACH</p>
+              <p id="coach-quote-1" class="text-[10px] italic text-sky-600 dark:text-sky-400 truncate mt-0.5">ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้</p>
+            </div>
+          </div>
+
+          <!-- Bottom-most Action Button -->
+          <div class="pt-1">
+            <button onclick="goToScreen(2)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white rounded-2xl font-bold text-sm shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 transition">
+              เริ่มประเมินสุขภาพ <i class="ph ph-arrow-right font-bold"></i>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -292,35 +322,55 @@
       <section id="screen-6" class="screen p-5 space-y-4 hidden">
         <div class="text-center">
           <h2 class="text-xl font-bold">เลือกรูปร่างของคุณ</h2>
-          <p class="text-xs text-slate-400">เลื่อน ซ้าย-ขวา เพื่อดูการเปลี่ยนแปลง</p>
+          <p class="text-xs text-slate-400">ระบบเลือกให้อัตโนมัติจากค่า BMI ของคุณ (แตะเพื่อเปลี่ยนได้)</p>
         </div>
 
-        <div class="py-6 flex items-center justify-center gap-4">
-          <div class="w-20 text-center opacity-40 scale-90">
-            <div id="shape-thin" class="h-36 bg-slate-200 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden">
+        <div class="py-4 flex items-end justify-center gap-3">
+          <!-- 1. ผอม (Thin) -->
+          <div id="card-shape-thin" onclick="selectShape('thin')" class="w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80">
+            <div id="shape-thin" class="h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700">
               🧍‍♀️
             </div>
-            <p class="text-[10px] mt-2">ผอม</p>
+            <p class="text-xs font-bold mt-2">ผอม</p>
             <p id="shape-thin-size" class="text-[9px] text-slate-400"></p>
+            <div id="badge-shape-thin" class="hidden mt-1">
+              <span class="inline-block px-2 py-0.5 bg-blue-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+            </div>
           </div>
-          <div class="w-28 text-center scale-110">
-            <div id="shape-normal" class="h-44 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden">
+
+          <!-- 2. ปกติ (Normal) -->
+          <div id="card-shape-normal" onclick="selectShape('normal')" class="w-28 text-center cursor-pointer transition-all duration-300 p-2.5 rounded-2xl scale-110 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 shadow-xl">
+            <div id="shape-normal" class="h-44 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-500">
               🏃‍♀️
             </div>
-            <span class="inline-block mt-2 px-2 py-0.5 bg-sky-600 text-white text-[10px] font-bold rounded-full">BMI 22.0 (ปกติ)</span>
-            <p id="shape-normal-size" class="text-[9px] text-slate-400 mt-1"></p>
+            <p class="text-xs font-bold mt-2">ปกติ</p>
+            <p id="shape-normal-size" class="text-[9px] text-slate-400"></p>
+            <div id="badge-shape-normal" class="mt-1">
+              <span class="inline-block px-2 py-0.5 bg-emerald-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+            </div>
           </div>
-          <div class="w-20 text-center opacity-40 scale-90">
-            <div id="shape-fat" class="h-36 bg-slate-200 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden">
+
+          <!-- 3. อ้วน (Fat) -->
+          <div id="card-shape-fat" onclick="selectShape('fat')" class="w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80">
+            <div id="shape-fat" class="h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700">
               🧘‍♀️
             </div>
-            <p class="text-[10px] mt-2">อ้วน</p>
+            <p class="text-xs font-bold mt-2">อ้วน</p>
             <p id="shape-fat-size" class="text-[9px] text-slate-400"></p>
+            <div id="badge-shape-fat" class="hidden mt-1">
+              <span class="inline-block px-2 py-0.5 bg-rose-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+            </div>
           </div>
         </div>
 
-        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center text-xs">
-          รูปร่างของคุณในปัจจุบัน: <b>น้ำหนัก 60 กก. | ส่วนสูง 165 ซม.</b>
+        <!-- Dynamic User BMI & Body Evaluation Card -->
+        <div id="body-shape-user-info" class="p-3.5 bg-sky-50/80 dark:bg-slate-800/80 border border-sky-100 dark:border-slate-700 rounded-2xl text-center text-xs space-y-1">
+          <p>ประเมินจากน้ำหนัก-ส่วนสูง: <b id="shape-eval-category" class="text-emerald-600 dark:text-emerald-400 font-bold">ปกติ</b></p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            น้ำหนัก <span id="shape-eval-weight" class="font-semibold text-slate-700 dark:text-slate-200">60</span> กก. | 
+            ส่วนสูง <span id="shape-eval-height" class="font-semibold text-slate-700 dark:text-slate-200">165</span> ซม. | 
+            BMI <span id="shape-eval-bmi" class="font-semibold text-slate-700 dark:text-slate-200">22.0</span>
+          </p>
         </div>
 
         <button onclick="goToScreen(7)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดูการจำลองผลลัพธ์</button>
@@ -341,13 +391,13 @@
 
         <div class="flex items-center justify-center gap-6 py-4">
           <div class="text-center">
-            <div class="w-20 h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">🧍‍♀️</div>
-            <span class="text-xs text-slate-400 mt-1 block">ก่อนเริ่ม</span>
+            <div id="sim-before-img" class="w-20 h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl overflow-hidden">🧍‍♀️</div>
+            <span id="sim-before-label" class="text-xs text-slate-400 mt-1 block">ก่อนเริ่ม</span>
           </div>
           <i class="ph ph-arrow-right text-sky-600 text-xl font-bold"></i>
           <div class="text-center">
-            <div class="w-20 h-32 bg-sky-100 dark:bg-sky-950/40 border border-sky-500 rounded-2xl flex items-center justify-center text-3xl">💃</div>
-            <span class="text-xs text-sky-600 font-bold mt-1 block">หลัง 30 วัน</span>
+            <div id="sim-after-img" class="w-20 h-32 bg-sky-100 dark:bg-sky-950/40 border border-sky-500 rounded-2xl flex items-center justify-center text-3xl overflow-hidden">💃</div>
+            <span id="sim-after-label" class="text-xs text-sky-600 font-bold mt-1 block">หลัง 30 วัน</span>
           </div>
         </div>
 
@@ -664,8 +714,8 @@
         <p class="text-xs text-slate-400">เพื่อรับคำแนะนำเฉพาะบุคคล</p>
 
         <div class="py-4">
-          <input type="text" id="coach-code" placeholder="รหัสโค้ช 6 หลัก (เช่น SKM123)" class="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-sky-400 text-center font-bold tracking-widest text-lg uppercase outline-none focus:ring-2 focus:ring-sky-500">
-          <p class="text-[10px] text-slate-400 mt-2">ตัวอย่าง : SKM123</p>
+          <input type="text" id="coach-code" onkeyup="if(event.key==='Enter') verifyCoachCode()" placeholder="รหัสโค้ช (เช่น SKM321 หรือ SKM123)" class="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-sky-400 text-center font-bold tracking-widest text-lg uppercase outline-none focus:ring-2 focus:ring-sky-500">
+          <p class="text-[10px] text-slate-400 mt-2">ตัวอย่าง : SKM321 หรือ SKM123</p>
         </div>
 
         <button onclick="verifyCoachCode()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ยืนยันรหัสโค้ช</button>
@@ -762,38 +812,46 @@
 
     <!-- ================= BOTTOM NAVIGATION BAR ================= -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 z-30">
-      <div class="grid grid-cols-4 h-16 items-center px-1">
+      <div class="grid grid-cols-5 h-16 items-center px-1">
 
         <!-- เมนู 1: หน้าแรก -->
         <button onclick="goToScreen(1)" id="bnav-1" class="flex flex-col items-center justify-center gap-1 text-sky-600 dark:text-sky-400 transition">
           <div class="w-6 h-6 flex items-center justify-center">
             <i class="ph ph-house text-xl"></i>
           </div>
-          <span class="text-[10px] font-semibold">หน้าแรก</span>
+          <span class="text-[9px] font-semibold">หน้าแรก</span>
         </button>
 
-        <!-- เมนู 2: ประเมิน / ชาเลนจ์ -->
+        <!-- เมนู 2: ภารกิจ -->
         <button onclick="goToScreen(5)" id="bnav-2" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
           <div class="w-6 h-6 flex items-center justify-center">
             <i class="ph ph-check-circle text-xl"></i>
           </div>
-          <span class="text-[10px] font-semibold">ภารกิจ</span>
+          <span class="text-[9px] font-semibold">ภารกิจ</span>
         </button>
 
-        <!-- เมนู 3: ติดตามผลลัพธ์ -->
+        <!-- เมนู 3: ผลลัพธ์ -->
         <button onclick="goToScreen(7)" id="bnav-3" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
           <div class="w-6 h-6 flex items-center justify-center">
             <i class="ph ph-chart-line text-xl"></i>
           </div>
-          <span class="text-[10px] font-semibold">ผลลัพธ์</span>
+          <span class="text-[9px] font-semibold">ผลลัพธ์</span>
         </button>
 
-        <!-- เมนู 4: ช่องทางติดต่อ / โปรไฟล์ -->
-        <button onclick="goToScreen(16)" id="bnav-4" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-          <div class="w-6 h-6 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
-            <img id="coach-photo-nav" src="https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=64" class="w-full h-full object-cover" alt="Coach Avatar">
+        <!-- เมนู 4: โค้ช -->
+        <button onclick="goToScreen(15)" id="bnav-4" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <div class="w-6 h-6 flex items-center justify-center">
+            <i class="ph ph-chat-teardrop-dots text-xl"></i>
           </div>
-          <span class="text-[10px] font-semibold">โค้ช</span>
+          <span class="text-[9px] font-semibold">โค้ช</span>
+        </button>
+
+        <!-- เมนู 5: Circular User Profile -->
+        <button onclick="goToScreen(16)" id="bnav-5" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <div class="w-6 h-6 rounded-full overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+            <img id="coach-photo-nav" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64" class="w-full h-full object-cover" alt="User Avatar">
+          </div>
+          <span class="text-[9px] font-semibold">โปรไฟล์</span>
         </button>
 
       </div>
@@ -891,6 +949,15 @@
       updateBottomBar(screenNumber);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
+      // Refresh dynamic data for the screen
+      loadCoachInfo();
+      if (screenNumber === 6) {
+        syncBodyShapeWithBMI();
+        loadBodyShapes();
+      } else if (screenNumber === 7) {
+        updateScreen7Simulation(selectedBodyShape || 'normal');
+      }
+
       // Track page view
       backend.trackPageView(screenNumber);
     }
@@ -905,10 +972,12 @@
     }
 
     function updateBottomBar(screenNumber) {
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 5; i++) {
         const btn = document.getElementById(`bnav-${i}`);
-        btn.classList.remove('text-sky-600', 'dark:text-sky-400');
-        btn.classList.add('text-slate-400');
+        if (btn) {
+          btn.classList.remove('text-sky-600', 'dark:text-sky-400');
+          btn.classList.add('text-slate-400');
+        }
       }
 
       if ([1, 2, 3, 4].includes(screenNumber)) {
@@ -917,8 +986,10 @@
         setActiveNav('bnav-2');
       } else if ([7, 10, 11, 13, 14, 17].includes(screenNumber)) {
         setActiveNav('bnav-3');
-      } else if ([12, 15, 16].includes(screenNumber)) {
+      } else if ([12, 15].includes(screenNumber)) {
         setActiveNav('bnav-4');
+      } else if ([16].includes(screenNumber)) {
+        setActiveNav('bnav-5');
       }
     }
 
@@ -950,6 +1021,10 @@
       const text = document.getElementById('display-bmi-text');
       text.innerText = result.message;
       text.className = `text-xs text-${result.color}-600 font-medium`;
+
+      // Sync with body shape screen immediately
+      hasUserManuallySelectedShape = false;
+      syncBodyShapeWithBMI();
     }
 
     function setChallengeDays(days) {
@@ -1034,6 +1109,8 @@
 
     // Initialize on load
     window.addEventListener('DOMContentLoaded', () => {
+      backend.loadCustomLogo();
+      backend.loadCustomBackground();
       calcBMIAction();
       loadCoachInfo();
       loadBodyShapes();
@@ -1046,6 +1123,136 @@
         });
       });
     });
+
+    // Dynamic Body Shape Selection linked to BMI
+    let selectedBodyShape = null;
+    let hasUserManuallySelectedShape = false;
+
+    function syncBodyShapeWithBMI() {
+      const weightInput = document.getElementById('input-weight');
+      const heightInput = document.getElementById('input-height');
+      const w = weightInput ? parseFloat(weightInput.value) || 60 : 60;
+      const h = heightInput ? parseFloat(heightInput.value) || 165 : 165;
+
+      const heightM = h / 100;
+      const bmi = parseFloat((w / (heightM * heightM)).toFixed(1));
+
+      // Asian/Thai BMI classification
+      let targetShape = 'normal';
+      let categoryName = 'ปกติ (สมส่วนสุขภาพดี)';
+      let badgeColor = 'emerald';
+
+      if (bmi < 18.5) {
+        targetShape = 'thin';
+        categoryName = 'ผอม / น้ำหนักน้อยกว่าเกณฑ์';
+        badgeColor = 'blue';
+      } else if (bmi <= 22.9) {
+        targetShape = 'normal';
+        categoryName = 'ปกติ (สมส่วนสุขภาพดี)';
+        badgeColor = 'emerald';
+      } else if (bmi <= 24.9) {
+        targetShape = 'fat';
+        categoryName = 'เริ่มมีน้ำหนักเกิน (ท้วม)';
+        badgeColor = 'amber';
+      } else {
+        targetShape = 'fat';
+        categoryName = 'อ้วน / ควรควบคุมน้ำหนัก';
+        badgeColor = 'rose';
+      }
+
+      // Update Screen 6 text elements
+      const evalCategory = document.getElementById('shape-eval-category');
+      const evalWeight = document.getElementById('shape-eval-weight');
+      const evalHeight = document.getElementById('shape-eval-height');
+      const evalBmi = document.getElementById('shape-eval-bmi');
+
+      if (evalCategory) {
+        evalCategory.textContent = categoryName;
+        evalCategory.className = `font-bold text-${badgeColor}-600 dark:text-${badgeColor}-400`;
+      }
+      if (evalWeight) evalWeight.textContent = w;
+      if (evalHeight) evalHeight.textContent = h;
+      if (evalBmi) evalBmi.textContent = bmi;
+
+      // Select matching shape if not manually changed
+      if (!hasUserManuallySelectedShape || !selectedBodyShape) {
+        selectShape(targetShape, true);
+      } else {
+        selectShape(selectedBodyShape, false);
+      }
+    }
+
+    function selectShape(shapeType, isAuto = false) {
+      if (!isAuto) {
+        hasUserManuallySelectedShape = true;
+      }
+      selectedBodyShape = shapeType;
+      localStorage.setItem('selected_body_shape', shapeType);
+
+      const shapes = ['thin', 'normal', 'fat'];
+      shapes.forEach(shape => {
+        const card = document.getElementById(`card-shape-${shape}`);
+        const badge = document.getElementById(`badge-shape-${shape}`);
+        const container = document.getElementById(`shape-${shape}`);
+
+        if (card && container) {
+          if (shape === shapeType) {
+            // Selected shape card: highlighted and enlarged
+            card.className = 'w-28 text-center cursor-pointer transition-all duration-300 p-2.5 rounded-2xl scale-110 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 shadow-xl';
+            container.className = 'h-44 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-500';
+            if (badge) badge.classList.remove('hidden');
+          } else {
+            // Non-selected shapes: smaller, dimmed
+            card.className = 'w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80';
+            container.className = 'h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700';
+            if (badge) badge.classList.add('hidden');
+          }
+        }
+      });
+
+      updateScreen7Simulation(shapeType);
+    }
+
+    function updateScreen7Simulation(shapeType) {
+      const beforeBox = document.getElementById('sim-before-img');
+      const afterBox = document.getElementById('sim-after-img');
+      const beforeLabel = document.getElementById('sim-before-label');
+      const afterLabel = document.getElementById('sim-after-label');
+
+      const weightInput = document.getElementById('input-weight');
+      const currentW = weightInput ? parseFloat(weightInput.value) || 60 : 60;
+
+      const customShape = typeof getBodyShapeData === 'function' ? getBodyShapeData(shapeType) : null;
+
+      if (shapeType === 'thin') {
+        if (beforeBox) {
+          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🧍‍♀️';
+        }
+        if (afterBox) {
+          afterBox.innerHTML = '🏃‍♀️';
+        }
+        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
+        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (${(currentW + 3).toFixed(1)} กก. มีกล้ามเนื้อ)`;
+      } else if (shapeType === 'fat') {
+        if (beforeBox) {
+          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🧘‍♀️';
+        }
+        if (afterBox) {
+          afterBox.innerHTML = '💃';
+        }
+        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
+        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (${Math.max(40, currentW - 4).toFixed(1)} กก. เฟิร์มกระชับ)`;
+      } else {
+        if (beforeBox) {
+          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🏃‍♀️';
+        }
+        if (afterBox) {
+          afterBox.innerHTML = '✨💃';
+        }
+        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
+        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (เอวคอด หุ่นลีน)`;
+      }
+    }
 
     // Load Body Shapes
     function loadBodyShapes() {
@@ -1074,11 +1281,41 @@
       const coach = backend.getSelectedCoach();
       if (!coach) return;
 
+      const fallbackPhoto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+      const safePhoto = (coach.photo && !coach.photo.endsWith('.html') && !coach.photo.includes('coach-dashboard'))
+        ? coach.photo
+        : fallbackPhoto;
+
+      // Update Screen 1 (Home Screen Coach)
+      const coachPhoto1 = document.getElementById('coach-photo-1');
+      const coachName1 = document.getElementById('coach-name-1');
+      const coachCode1 = document.getElementById('coach-code-1');
+      const coachTitle1 = document.getElementById('coach-title-1');
+      const coachQuote1 = document.getElementById('coach-quote-1');
+
+      if (coachPhoto1) {
+        coachPhoto1.src = safePhoto;
+        coachPhoto1.onerror = function() { this.src = fallbackPhoto; };
+      }
+      if (coachName1 && coach.name) coachName1.textContent = coach.name;
+      if (coachCode1 && coach.code) coachCode1.textContent = coach.code;
+      if (coachTitle1 && coach.title) coachTitle1.textContent = coach.title;
+      if (coachQuote1 && coach.quote) coachQuote1.textContent = `"${coach.quote}"`;
+
       // Update Screen 5 (Mini Challenge)
       const coachPhoto5 = document.getElementById('coach-photo-5');
       const coachName5 = document.getElementById('coach-name-5');
-      if (coachPhoto5) coachPhoto5.src = coach.photo;
-      if (coachName5) coachName5.textContent = `สวัสดีค่ะ ${coach.name}`;
+      if (coachPhoto5) {
+        coachPhoto5.src = safePhoto;
+        coachPhoto5.onerror = function() { this.src = fallbackPhoto; };
+      }
+      if (coachName5 && coach.name) coachName5.textContent = `สวัสดีค่ะ ${coach.name}`;
+
+      // Update Screen 15 Input (prefill if empty)
+      const coachCodeInput = document.getElementById('coach-code');
+      if (coachCodeInput && coach.code && !coachCodeInput.value) {
+        coachCodeInput.value = coach.code;
+      }
 
       // Update Screen 16 (Coach Info)
       const coachPhoto16 = document.getElementById('coach-photo-16');
@@ -1086,10 +1323,13 @@
       const coachTitle16 = document.getElementById('coach-title-16');
       const coachQuote16 = document.getElementById('coach-quote-16');
 
-      if (coachPhoto16) coachPhoto16.src = coach.photo;
-      if (coachName16) coachName16.textContent = coach.name;
-      if (coachTitle16) coachTitle16.textContent = coach.title;
-      if (coachQuote16) coachQuote16.textContent = `"${coach.quote}"`;
+      if (coachPhoto16) {
+        coachPhoto16.src = safePhoto;
+        coachPhoto16.onerror = function() { this.src = fallbackPhoto; };
+      }
+      if (coachName16 && coach.name) coachName16.textContent = coach.name;
+      if (coachTitle16 && coach.title) coachTitle16.textContent = coach.title;
+      if (coachQuote16 && coach.quote) coachQuote16.textContent = `"${coach.quote}"`;
 
       // Update LINE and Phone buttons
       const lineBtn = document.getElementById('coach-line-btn');
@@ -1102,9 +1342,17 @@
         phoneBtn.onclick = () => window.open(`tel:${coach.phone}`, '_self');
       }
 
-      // Update Bottom Navigation Avatar
+      // Update Bottom Navigation Avatar and Floating Header Avatar
       const coachPhotoNav = document.getElementById('coach-photo-nav');
-      if (coachPhotoNav) coachPhotoNav.src = coach.photo;
+      if (coachPhotoNav) {
+        coachPhotoNav.src = safePhoto;
+        coachPhotoNav.onerror = function() { this.src = fallbackPhoto; };
+      }
+      const userHeaderAvatar = document.getElementById('user-header-avatar');
+      if (userHeaderAvatar) {
+        userHeaderAvatar.src = safePhoto;
+        userHeaderAvatar.onerror = function() { this.src = fallbackPhoto; };
+      }
     }
 
     // Contact Form Handler (Screen 4)
@@ -1140,9 +1388,11 @@
 
     // Coach Code Verification (Screen 15)
     function verifyCoachCode() {
-      const code = document.getElementById('coach-code').value;
+      const codeInput = document.getElementById('coach-code');
+      const code = codeInput ? codeInput.value : '';
       if (backend.verifyCoachCode(code)) {
-        setTimeout(() => goToScreen(16), 1000);
+        loadCoachInfo();
+        setTimeout(() => goToScreen(16), 500);
       }
     }
 

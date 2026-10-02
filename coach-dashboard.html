@@ -386,30 +386,82 @@
       }
 
       loadCoaches() {
+        const defaultCoaches = [
+          {
+            id: '1',
+            name: 'โค้ช Nithichai',
+            code: 'SKM321',
+            title: 'SKM.WELLNESS COACH',
+            quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
+            photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+            line: '@coach.nithichai',
+            phone: '02-xxx-xxxx',
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: '2',
+            name: 'โค้ชแอน',
+            code: 'SKM123',
+            title: 'SKM.WELLNESS SENIOR COACH',
+            quote: 'สุขภาพดีไม่มีทางลัด มีแต่วินัยและความใส่ใจในทุกวัน',
+            photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300',
+            line: '@coach.ann',
+            phone: '081-xxx-xxxx',
+            createdAt: new Date().toISOString()
+          }
+        ];
+
         const data = localStorage.getItem('skm_coaches');
         if (!data) {
-          // Default coaches
-          const defaultCoaches = [
-            {
-              id: '1',
-              name: 'โค้ชแอน',
-              code: 'SKM123',
-              title: 'SKM.WELLNESS COACH',
-              quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
-              photo: 'https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300',
-              line: '@coach.ann',
-              phone: '02-xxx-xxxx',
-              createdAt: new Date().toISOString()
-            }
-          ];
           this.saveCoaches(defaultCoaches);
           return defaultCoaches;
         }
-        return JSON.parse(data);
+
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            let updated = false;
+            const cleaned = parsed.map(c => {
+              if (!c.photo || c.photo.endsWith('.html') || c.photo.includes('coach-dashboard')) {
+                c.photo = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+                updated = true;
+              }
+              return c;
+            });
+            if (updated) {
+              localStorage.setItem('skm_coaches', JSON.stringify(cleaned));
+            }
+            return cleaned;
+          }
+        } catch (e) {}
+
+        this.saveCoaches(defaultCoaches);
+        return defaultCoaches;
       }
 
       saveCoaches(coaches) {
-        localStorage.setItem('skm_coaches', JSON.stringify(coaches || this.coaches));
+        const list = coaches || this.coaches;
+        localStorage.setItem('skm_coaches', JSON.stringify(list));
+        if (list && list.length > 0) {
+          // If selected_coach exists in list, update it, otherwise set to first coach
+          const selStr = localStorage.getItem('selected_coach');
+          let found = false;
+          if (selStr) {
+            try {
+              const sel = JSON.parse(selStr);
+              const match = list.find(c => c.id === sel.id);
+              if (match) {
+                localStorage.setItem('selected_coach', JSON.stringify(match));
+                found = true;
+              }
+            } catch (e) {}
+          }
+          if (!found) {
+            localStorage.setItem('selected_coach', JSON.stringify(list[0]));
+          }
+        } else {
+          localStorage.removeItem('selected_coach');
+        }
       }
 
       addCoach(coach) {
@@ -429,6 +481,7 @@
         if (index !== -1) {
           this.coaches[index] = { ...this.coaches[index], ...data, updatedAt: new Date().toISOString() };
           this.saveCoaches();
+          localStorage.setItem('selected_coach', JSON.stringify(this.coaches[index]));
           this.render();
           this.showToast('อัปเดตข้อมูลสำเร็จ!', 'success');
         }
@@ -510,9 +563,15 @@
         document.getElementById('coach-line').value = coach.line || '';
         document.getElementById('coach-phone').value = coach.phone || '';
 
-        if (coach.photo) {
-          document.getElementById('photo-preview').classList.remove('hidden');
-          document.getElementById('photo-preview-img').src = coach.photo;
+        const previewContainer = document.getElementById('photo-preview');
+        const previewImg = document.getElementById('photo-preview-img');
+        if (coach.photo && !coach.photo.endsWith('.html') && !coach.photo.includes('coach-dashboard')) {
+          previewContainer.classList.remove('hidden');
+          previewImg.setAttribute('src', coach.photo);
+          previewImg.src = coach.photo;
+        } else {
+          previewContainer.classList.add('hidden');
+          previewImg.removeAttribute('src');
         }
 
         openAddCoachModal();
@@ -544,7 +603,10 @@
       document.getElementById('coach-modal').classList.add('hidden');
       document.getElementById('coach-form').reset();
       document.getElementById('coach-id').value = '';
-      document.getElementById('photo-preview').classList.add('hidden');
+      const previewContainer = document.getElementById('photo-preview');
+      const previewImg = document.getElementById('photo-preview-img');
+      if (previewContainer) previewContainer.classList.add('hidden');
+      if (previewImg) previewImg.removeAttribute('src');
       document.getElementById('modal-title').textContent = 'เพิ่มโค้ชใหม่';
       coachManager.currentEditId = null;
     }
@@ -561,8 +623,11 @@
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        document.getElementById('photo-preview').classList.remove('hidden');
-        document.getElementById('photo-preview-img').src = e.target.result;
+        const previewContainer = document.getElementById('photo-preview');
+        const previewImg = document.getElementById('photo-preview-img');
+        previewContainer.classList.remove('hidden');
+        previewImg.setAttribute('src', e.target.result);
+        previewImg.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -570,17 +635,39 @@
     function saveCoach(event) {
       event.preventDefault();
 
-      const coachData = {
-        name: document.getElementById('coach-name').value,
-        code: document.getElementById('coach-code').value.toUpperCase(),
-        title: document.getElementById('coach-title').value,
-        quote: document.getElementById('coach-quote').value,
-        line: document.getElementById('coach-line').value,
-        phone: document.getElementById('coach-phone').value,
-        photo: document.getElementById('photo-preview-img').src || 'https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=300'
-      };
-
+      const previewContainer = document.getElementById('photo-preview');
+      const previewImg = document.getElementById('photo-preview-img');
       const editId = document.getElementById('coach-id').value;
+
+      let photoUrl = '';
+      if (previewContainer && !previewContainer.classList.contains('hidden') && previewImg) {
+        const rawSrc = previewImg.getAttribute('src');
+        if (rawSrc && !rawSrc.endsWith('.html') && !rawSrc.includes('coach-dashboard')) {
+          photoUrl = previewImg.src;
+        }
+      }
+
+      // If editing existing coach and no new photo was chosen, retain existing photo
+      if (!photoUrl && editId) {
+        const existing = coachManager.coaches.find(c => c.id === editId);
+        if (existing && existing.photo && !existing.photo.endsWith('.html') && !existing.photo.includes('coach-dashboard')) {
+          photoUrl = existing.photo;
+        }
+      }
+
+      if (!photoUrl) {
+        photoUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+      }
+
+      const coachData = {
+        name: document.getElementById('coach-name').value.trim(),
+        code: document.getElementById('coach-code').value.trim().toUpperCase(),
+        title: document.getElementById('coach-title').value.trim(),
+        quote: document.getElementById('coach-quote').value.trim(),
+        line: document.getElementById('coach-line').value.trim(),
+        phone: document.getElementById('coach-phone').value.trim(),
+        photo: photoUrl
+      };
 
       if (editId) {
         coachManager.updateCoach(editId, coachData);
