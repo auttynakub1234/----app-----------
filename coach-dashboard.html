@@ -77,6 +77,9 @@
       <button onclick="showTab('branding')" id="tab-branding" class="tab-btn px-4 py-2 rounded-xl font-medium text-sm transition whitespace-nowrap">
         <i class="ph ph-paint-brush"></i> โลโก้ & พื้นหลัง
       </button>
+      <button onclick="showTab('contacts')" id="tab-contacts" class="tab-btn px-4 py-2 rounded-xl font-medium text-sm transition whitespace-nowrap">
+        <i class="ph ph-address-book"></i> ข้อมูลติดต่อจากลูกค้า
+      </button>
     </div>
 
     <!-- Tab Content: Coaches -->
@@ -119,7 +122,12 @@
           </div>
 
           <div class="space-y-3">
-            <input type="text" id="shape-thin-size-input" placeholder="เช่น น้ำหนัก 45 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+            <div class="flex gap-2">
+              <input type="text" id="shape-thin-size-input" placeholder="เช่น น้ำหนัก 45 กก." class="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+              <button onclick="saveBodyShapeSize('thin')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0">
+                <i class="ph ph-floppy-disk"></i> บันทึก
+              </button>
+            </div>
 
             <input type="file" id="upload-thin" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'thin')">
             <button onclick="document.getElementById('upload-thin').click()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition">
@@ -155,7 +163,12 @@
           </div>
 
           <div class="space-y-3">
-            <input type="text" id="shape-normal-size-input" placeholder="เช่น น้ำหนัก 60 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+            <div class="flex gap-2">
+              <input type="text" id="shape-normal-size-input" placeholder="เช่น น้ำหนัก 60 กก." class="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+              <button onclick="saveBodyShapeSize('normal')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0">
+                <i class="ph ph-floppy-disk"></i> บันทึก
+              </button>
+            </div>
 
             <input type="file" id="upload-normal" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'normal')">
             <button onclick="document.getElementById('upload-normal').click()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition">
@@ -191,7 +204,12 @@
           </div>
 
           <div class="space-y-3">
-            <input type="text" id="shape-fat-size-input" placeholder="เช่น น้ำหนัก 80 กก." class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+            <div class="flex gap-2">
+              <input type="text" id="shape-fat-size-input" placeholder="เช่น น้ำหนัก 80 กก." class="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-sm outline-none focus:border-sky-500">
+              <button onclick="saveBodyShapeSize('fat')" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0">
+                <i class="ph ph-floppy-disk"></i> บันทึก
+              </button>
+            </div>
 
             <input type="file" id="upload-fat" accept="image/*" class="hidden" onchange="handleBodyShapeUpload(event, 'fat')">
             <button onclick="document.getElementById('upload-fat').click()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold text-sm transition">
@@ -298,6 +316,25 @@
       </div>
     </div>
 
+    <!-- Tab Content: Contacts -->
+    <div id="content-contacts" class="tab-content hidden space-y-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+          <div>
+            <h2 class="text-lg font-bold">ข้อมูลติดต่อจากลูกค้า</h2>
+            <p class="text-xs text-slate-400">รายการที่ลูกค้าส่งฟอร์ม (LINE ID, เบอร์โทร, อีเมล) จากหน้าเว็บ</p>
+          </div>
+          <button onclick="loadContacts()" class="px-4 py-2 bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/30 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <i class="ph ph-arrows-clockwise text-base"></i> รีเฟรชข้อมูล
+          </button>
+        </div>
+
+        <div id="contacts-container" class="space-y-3">
+          <div class="text-center py-12 text-slate-400 text-sm">กำลังโหลดข้อมูล...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Add/Edit Coach Modal -->
@@ -383,6 +420,33 @@
         this.coaches = this.loadCoaches();
         this.currentEditId = null;
         this.render();
+        this.syncFromCloudflare();
+      }
+
+      async syncFromCloudflare() {
+        try {
+          const [coachesRes, activeRes] = await Promise.all([
+            fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch('/api/active-coach').then(r => r.ok ? r.json() : null).catch(() => null)
+          ]);
+
+          let changed = false;
+          if (coachesRes && coachesRes.success && Array.isArray(coachesRes.data) && coachesRes.data.length > 0) {
+            this.coaches = coachesRes.data;
+            localStorage.setItem('skm_coaches', JSON.stringify(this.coaches));
+            changed = true;
+          }
+          if (activeRes && activeRes.success && activeRes.data) {
+            localStorage.setItem('selected_coach', JSON.stringify(activeRes.data));
+            if (activeRes.data.code) localStorage.setItem('skm_coach_code', activeRes.data.code);
+            changed = true;
+          }
+          if (changed) {
+            this.render();
+          }
+        } catch(e) {
+          console.warn('Sync from Cloudflare error:', e);
+        }
       }
 
       loadCoaches() {
@@ -439,11 +503,10 @@
         return defaultCoaches;
       }
 
-      saveCoaches(coaches) {
+      async saveCoaches(coaches) {
         const list = coaches || this.coaches;
         localStorage.setItem('skm_coaches', JSON.stringify(list));
         if (list && list.length > 0) {
-          // If selected_coach exists in list, update it, otherwise set to first coach
           const selStr = localStorage.getItem('selected_coach');
           let found = false;
           if (selStr) {
@@ -462,6 +525,17 @@
         } else {
           localStorage.removeItem('selected_coach');
         }
+
+        // Push to Cloudflare KV
+        try {
+          await fetch('/api/coaches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coaches: list })
+          });
+        } catch(e) {
+          console.warn('Save coaches to Cloudflare error:', e);
+        }
       }
 
       addCoach(coach) {
@@ -472,8 +546,8 @@
         };
         this.coaches.push(newCoach);
         this.saveCoaches();
-        this.render();
-        this.showToast('เพิ่มโค้ชสำเร็จ!', 'success');
+        this.setActiveCoach(newCoach.id);
+        this.showToast(`เพิ่มโค้ช "${newCoach.name}" สำเร็จและตั้งเป็นโค้ชหลักแล้ว!`, 'success');
       }
 
       updateCoach(id, data) {
@@ -481,7 +555,10 @@
         if (index !== -1) {
           this.coaches[index] = { ...this.coaches[index], ...data, updatedAt: new Date().toISOString() };
           this.saveCoaches();
-          localStorage.setItem('selected_coach', JSON.stringify(this.coaches[index]));
+          const activeId = this.getActiveCoachId();
+          if (activeId === id) {
+            this.setActiveCoach(id);
+          }
           this.render();
           this.showToast('อัปเดตข้อมูลสำเร็จ!', 'success');
         }
@@ -493,6 +570,42 @@
           this.saveCoaches();
           this.render();
           this.showToast('ลบโค้ชสำเร็จ!', 'success');
+        }
+      }
+
+      getActiveCoachId() {
+        const selStr = localStorage.getItem('selected_coach');
+        if (selStr) {
+          try {
+            const sel = JSON.parse(selStr);
+            if (sel && sel.id) return sel.id;
+          } catch(e) {}
+        }
+        const code = localStorage.getItem('skm_coach_code');
+        if (code) {
+          const match = this.coaches.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
+          if (match) return match.id;
+        }
+        return this.coaches.length > 0 ? this.coaches[0].id : null;
+      }
+
+      async setActiveCoach(id) {
+        const coach = this.coaches.find(c => c.id === id);
+        if (!coach) return;
+        localStorage.setItem('selected_coach', JSON.stringify(coach));
+        localStorage.setItem('skm_coach_code', coach.code);
+        this.render();
+        this.showToast(`ตั้ง "${coach.name}" เป็นโค้ชหลักหน้าแรกเรียบร้อย!`, 'success');
+
+        // Push to Cloudflare KV
+        try {
+          await fetch('/api/active-coach', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coach })
+          });
+        } catch(e) {
+          console.warn('Set active coach to Cloudflare error:', e);
         }
       }
 
@@ -513,8 +626,17 @@
           return;
         }
 
-        container.innerHTML = this.coaches.map(coach => `
-          <div class="coach-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 space-y-4">
+        const activeId = this.getActiveCoachId();
+
+        container.innerHTML = this.coaches.map(coach => {
+          const isActive = coach.id === activeId;
+          return `
+          <div class="coach-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 space-y-4 relative ${isActive ? 'ring-2 ring-sky-500 bg-sky-50/20' : ''}">
+            ${isActive ? `
+              <div class="absolute -top-3 right-4 px-3 py-1 bg-gradient-to-r from-sky-500 to-blue-600 text-white text-[11px] font-bold rounded-full shadow flex items-center gap-1">
+                <i class="ph ph-check-circle font-bold"></i> แสดงผลที่หน้าแรก
+              </div>
+            ` : ''}
             <div class="flex items-start gap-4">
               <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-sky-500 shrink-0">
                 <img src="${coach.photo}" class="w-full h-full object-cover" alt="${coach.name}">
@@ -537,16 +659,28 @@
               ${coach.phone ? `<div class="flex items-center gap-2"><i class="ph ph-phone text-sky-600"></i> ${coach.phone}</div>` : ''}
             </div>
 
-            <div class="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <button onclick="coachManager.editCoach('${coach.id}')" class="flex-1 py-2 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 rounded-xl text-sm font-medium hover:bg-sky-200 dark:hover:bg-sky-900/50 transition flex items-center justify-center gap-1">
-                <i class="ph ph-pencil"></i> แก้ไข
-              </button>
-              <button onclick="coachManager.deleteCoach('${coach.id}')" class="flex-1 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-xl text-sm font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition flex items-center justify-center gap-1">
-                <i class="ph ph-trash"></i> ลบ
-              </button>
+            <div class="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+              ${!isActive ? `
+                <button onclick="coachManager.setActiveCoach('${coach.id}')" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                  <i class="ph ph-star font-bold"></i> ตั้งเป็นโค้ชหลักหน้าแรก
+                </button>
+              ` : `
+                <div class="w-full py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold text-center flex items-center justify-center gap-1">
+                  <i class="ph ph-check-circle"></i> กำลังแสดงผลที่หน้าแรก
+                </div>
+              `}
+              <div class="flex gap-2">
+                <button onclick="coachManager.editCoach('${coach.id}')" class="flex-1 py-2 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 rounded-xl text-sm font-medium hover:bg-sky-200 dark:hover:bg-sky-900/50 transition flex items-center justify-center gap-1">
+                  <i class="ph ph-pencil"></i> แก้ไข
+                </button>
+                <button onclick="coachManager.deleteCoach('${coach.id}')" class="flex-1 py-2 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-xl text-sm font-medium hover:bg-rose-200 dark:hover:bg-rose-900/50 transition flex items-center justify-center gap-1">
+                  <i class="ph ph-trash"></i> ลบ
+                </button>
+              </div>
             </div>
           </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
       editCoach(id) {
@@ -720,6 +854,9 @@
       if (tabName === 'branding') {
         loadBrandingPreviews();
       }
+      if (tabName === 'contacts') {
+        loadContacts();
+      }
     }
 
     // Load Body Shapes Previews
@@ -727,18 +864,63 @@
       const shapes = ['thin', 'normal', 'fat'];
 
       shapes.forEach(shape => {
-        const data = getBodyShapeData(shape);
-        if (data && data.image) {
-          document.getElementById(`preview-${shape}`).src = data.image;
-          document.getElementById(`preview-${shape}`).classList.remove('hidden');
-          document.getElementById(`placeholder-${shape}`).classList.add('hidden');
-          document.getElementById(`size-${shape}`).textContent = data.size || 'ไม่ระบุ';
+        const data = (typeof getBodyShapeData === 'function' ? getBodyShapeData(shape) : null);
+        if (data) {
+          if (data.image) {
+            const previewEl = document.getElementById(`preview-${shape}`);
+            const placeholderEl = document.getElementById(`placeholder-${shape}`);
+            if (previewEl) {
+              previewEl.src = data.image;
+              previewEl.classList.remove('hidden');
+            }
+            if (placeholderEl) placeholderEl.classList.add('hidden');
+          }
+          if (data.size) {
+            const sizeLabel = document.getElementById(`size-${shape}`);
+            const sizeInput = document.getElementById(`shape-${shape}-size-input`);
+            if (sizeLabel) sizeLabel.textContent = data.size;
+            if (sizeInput) sizeInput.value = data.size;
+          }
         }
       });
     }
 
+    async function saveBodyShapeSize(shapeType) {
+      const sizeInput = document.getElementById(`shape-${shapeType}-size-input`);
+      const size = sizeInput ? sizeInput.value.trim() : '';
+      let data = (typeof getBodyShapeData === 'function' ? getBodyShapeData(shapeType) : null) || {};
+      data.size = size;
+      data.updatedAt = new Date().toISOString();
+      localStorage.setItem(`body_shape_${shapeType}`, JSON.stringify(data));
+      const sizeLabel = document.getElementById(`size-${shapeType}`);
+      if (sizeLabel) sizeLabel.textContent = size || 'ไม่ระบุ';
+      coachManager.showToast('บันทึกขนาดรูปร่างสำเร็จ!', 'success');
+
+      // Sync to Cloudflare KV
+      try {
+        await fetch('/api/bodyshapes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shapeType, data })
+        });
+      } catch (err) {
+        console.warn('Sync body shape size error:', err);
+      }
+    }
+
     // Load Branding Previews
-    function loadBrandingPreviews() {
+    async function loadBrandingPreviews() {
+      try {
+        const res = await fetch('/api/branding');
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && json.data) {
+            if (json.data.logoUrl) localStorage.setItem('app_logo_url', json.data.logoUrl);
+            if (json.data.bgUrl) localStorage.setItem('home_bg_url', json.data.bgUrl);
+          }
+        }
+      } catch (e) {}
+
       const logoUrl = localStorage.getItem('app_logo_url');
       const bgUrl = localStorage.getItem('home_bg_url');
 
@@ -758,10 +940,21 @@
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         localStorage.setItem('app_logo_url', e.target.result);
         document.getElementById('logo-preview-img').src = e.target.result;
         coachManager.showToast('อัปโหลดโลโก้สำเร็จ!', 'success');
+
+        // Sync to Cloudflare KV
+        try {
+          await fetch('/api/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ logoUrl: e.target.result })
+          });
+        } catch (err) {
+          console.warn('Sync logo error:', err);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -773,27 +966,117 @@
         return;
       }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         localStorage.setItem('home_bg_url', e.target.result);
         document.getElementById('bg-preview-img').src = e.target.result;
         coachManager.showToast('อัปโหลดพื้นหลังสำเร็จ!', 'success');
+
+        // Sync to Cloudflare KV
+        try {
+          await fetch('/api/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bgUrl: e.target.result })
+          });
+        } catch (err) {
+          console.warn('Sync background error:', err);
+        }
       };
       reader.readAsDataURL(file);
     }
 
-    function removeLogo() {
+    async function removeLogo() {
       if (confirm('ต้องการลบโลโก้หรือไม่?')) {
         localStorage.removeItem('app_logo_url');
         document.getElementById('logo-preview-img').src = 'https://via.placeholder.com/200?text=No+Logo';
         coachManager.showToast('ลบโลโก้สำเร็จ', 'success');
+
+        try {
+          await fetch('/api/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ logoUrl: '' })
+          });
+        } catch (err) {}
       }
     }
 
-    function removeBackground() {
+    async function removeBackground() {
       if (confirm('ต้องการลบพื้นหลังหรือไม่?')) {
         localStorage.removeItem('home_bg_url');
         document.getElementById('bg-preview-img').src = 'https://via.placeholder.com/400x600?text=No+Background';
         coachManager.showToast('ลบพื้นหลังสำเร็จ', 'success');
+
+        try {
+          await fetch('/api/branding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bgUrl: '' })
+          });
+        } catch (err) {}
+      }
+    }
+
+    // Customer Contacts Management
+    async function loadContacts() {
+      const container = document.getElementById('contacts-container');
+      if (!container) return;
+      container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm"><i class="ph ph-spinner animate-spin text-2xl mb-2 block"></i>กำลังโหลดข้อมูลจาก Cloudflare KV...</div>';
+      try {
+        const res = await fetch('/api/contacts');
+        const json = await res.json();
+        const contacts = (json && json.success && Array.isArray(json.data)) ? json.data : [];
+        if (contacts.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 text-slate-400">
+              <i class="ph ph-chats-circle text-5xl mb-3 block text-slate-300 dark:text-slate-600"></i>
+              <p class="font-medium">ยังไม่มีข้อมูลติดต่อจากลูกค้า</p>
+              <p class="text-xs text-slate-400 mt-1">เมื่อผู้ใช้กรอกข้อมูลในหน้าประเมิน ข้อมูลจะเข้ามาแสดงที่นี่อัตโนมัติ</p>
+            </div>
+          `;
+          return;
+        }
+
+        const sorted = [...contacts].reverse();
+        container.innerHTML = sorted.map((c, index) => {
+          const dateStr = c.createdAt || c.timestamp ? new Date(c.createdAt || c.timestamp).toLocaleString('th-TH') : '-';
+          return `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-300 text-xs font-bold flex items-center justify-center">${contacts.length - index}</span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-100">${c.name || 'ผู้ประเมินสุขภาพ'}</span>
+                  <span class="text-[11px] text-slate-400">${dateStr}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-300 ml-8">
+                  ${c.phone ? `<span class="flex items-center gap-1"><i class="ph ph-phone text-sky-500"></i> ${c.phone}</span>` : ''}
+                  ${c.line_id || c.lineId ? `<span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium"><i class="ph ph-chat-circle-dots"></i> LINE: ${c.line_id || c.lineId}</span>` : ''}
+                  ${c.email ? `<span class="flex items-center gap-1"><i class="ph ph-envelope text-purple-500"></i> ${c.email}</span>` : ''}
+                </div>
+                ${c.notes || c.message ? `<p class="text-xs text-slate-500 dark:text-slate-400 ml-8 mt-1 italic bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">"${c.notes || c.message}"</p>` : ''}
+              </div>
+              <div class="flex items-center gap-2 ml-8 md:ml-0 shrink-0">
+                ${(c.phone) ? `<a href="tel:${c.phone}" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-medium flex items-center gap-1 transition"><i class="ph ph-phone-call"></i> โทร</a>` : ''}
+                ${(c.line_id || c.lineId) ? `<a href="https://line.me/R/ti/p/~${encodeURIComponent(c.line_id || c.lineId)}" target="_blank" class="px-3 py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-medium flex items-center gap-1 transition"><i class="ph ph-chats"></i> LINE</a>` : ''}
+                <button onclick="deleteContact('${c.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg transition" title="ลบ"><i class="ph ph-trash text-base"></i></button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error loading contacts:', err);
+        container.innerHTML = '<div class="text-center py-6 text-rose-500 text-sm">ไม่สามารถโหลดข้อมูลได้ในขณะนี้</div>';
+      }
+    }
+
+    async function deleteContact(id) {
+      if (!confirm('ต้องการลบข้อมูลลูกค้านี้หรือไม่?')) return;
+      try {
+        await fetch(`/api/contacts?id=${id}`, { method: 'DELETE' });
+        coachManager.showToast('ลบข้อมูลเรียบร้อย', 'success');
+        loadContacts();
+      } catch (e) {
+        coachManager.showToast('เกิดข้อผิดพลาดในการลบ', 'error');
       }
     }
 

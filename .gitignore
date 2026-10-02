@@ -34,6 +34,8 @@ lerna-debug.log*
 # Build outputs
 dist/
 build/
+public/
+.wrangler/
 
 .vercel
 .env*

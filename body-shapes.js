@@ -10,7 +10,7 @@ function handleBodyShapeUpload(event, shapeType) {
   }
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     // Get size input
     const sizeInput = document.getElementById(`shape-${shapeType}-size-input`);
     const size = sizeInput ? sizeInput.value : '';
@@ -22,6 +22,17 @@ function handleBodyShapeUpload(event, shapeType) {
     };
 
     localStorage.setItem(`body_shape_${shapeType}`, JSON.stringify(data));
+
+    // Sync to Cloudflare KV
+    try {
+      await fetch('/api/bodyshapes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shapeType, data })
+      });
+    } catch (err) {
+      console.warn('Sync body shape to Cloudflare error:', err);
+    }
 
     const labels = {
       thin: 'ผอม',
@@ -40,7 +51,7 @@ function handleBodyShapeUpload(event, shapeType) {
 }
 
 // Remove Body Shape
-function removeBodyShape(shapeType) {
+async function removeBodyShape(shapeType) {
   const labels = {
     thin: 'ผอม',
     normal: 'ปกติ',
@@ -49,6 +60,16 @@ function removeBodyShape(shapeType) {
 
   if (confirm(`ต้องการลบรูปรูปร่าง${labels[shapeType]}หรือไม่?`)) {
     localStorage.removeItem(`body_shape_${shapeType}`);
+
+    // Sync to Cloudflare KV
+    try {
+      await fetch('/api/bodyshapes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shapeType, data: null })
+      });
+    } catch (err) {}
+
     alert(`ลบรูปรูปร่าง${labels[shapeType]}สำเร็จ`);
     location.reload();
   }

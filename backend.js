@@ -23,24 +23,56 @@ class SKMBackend {
         this.loadCustomBackground();
       }
     }
-    await this.initSupabase();
     this.loadUserData();
+    await this.syncWithCloudflare();
   }
 
-  // ========== SUPABASE CONNECTION ==========
-  async initSupabase() {
-    if (typeof window !== 'undefined' && typeof window.supabase !== 'undefined' && APP_CONFIG.supabase.url !== 'YOUR_SUPABASE_URL') {
-      try {
-        this.supabase = window.supabase.createClient(
-          APP_CONFIG.supabase.url,
-          APP_CONFIG.supabase.anonKey
-        );
-        console.log('✅ Supabase connected');
-      } catch (error) {
-        console.warn('⚠️ Supabase connection failed:', error);
+  // ========== CLOUDFLARE KV REAL-TIME SYNC ==========
+  async syncWithCloudflare() {
+    try {
+      // 1. Fetch Coaches and Active Coach from Cloudflare KV
+      const [coachesRes, activeRes] = await Promise.all([
+        fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/active-coach').then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+
+      if (coachesRes && coachesRes.success && Array.isArray(coachesRes.data) && coachesRes.data.length > 0) {
+        localStorage.setItem('skm_coaches', JSON.stringify(coachesRes.data));
       }
-    } else {
-      console.log('📦 Running in local mode (no Supabase)');
+
+      if (activeRes && activeRes.success && activeRes.data) {
+        localStorage.setItem('selected_coach', JSON.stringify(activeRes.data));
+        if (activeRes.data.code) {
+          localStorage.setItem('skm_coach_code', activeRes.data.code);
+        }
+      }
+
+      // 2. Fetch Branding & Body Shapes from Cloudflare KV
+      const [brandingRes, shapesRes] = await Promise.all([
+        fetch('/api/branding').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/bodyshapes').then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+
+      if (brandingRes && brandingRes.success && brandingRes.data) {
+        if (brandingRes.data.logoUrl) localStorage.setItem('app_logo_url', brandingRes.data.logoUrl);
+        if (brandingRes.data.bgUrl) localStorage.setItem('home_bg_url', brandingRes.data.bgUrl);
+      }
+
+      if (shapesRes && shapesRes.success && shapesRes.data) {
+        for (const [key, val] of Object.entries(shapesRes.data)) {
+          if (val) localStorage.setItem(`body_shape_${key}`, JSON.stringify(val));
+        }
+      }
+
+      // Trigger UI updates with Cloudflare KV data
+      if (typeof window !== 'undefined') {
+        if (typeof window.loadCoachInfo === 'function') window.loadCoachInfo();
+        if (typeof window.loadBodyShapes === 'function') window.loadBodyShapes();
+        this.loadCustomBackground();
+        this.loadCustomLogo();
+      }
+    } catch (err) {
+      console.warn('Cloudflare KV sync fallback to local cache:', err);
     }
   }
 
@@ -240,12 +272,18 @@ class SKMBackend {
     // Save locally
     this.saveUserData(contactData);
 
-    // Save to Supabase
-    if (this.supabase) {
-      await this.syncToSupabase('contacts', contactData);
+    // Save to Cloudflare KV
+    try {
+      await fetch('/api/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactData)
+      });
+    } catch (e) {
+      console.warn('Failed to sync contact to Cloudflare:', e);
     }
 
-    this.showToast('บันทึกข้อมูลสำเร็จ!', 'success');
+    this.showToast('บันทึกข้อมูลสำเร็จ! ทีมงานจะติดต่อกลับโดยเร็ว', 'success');
     return true;
   }
 
@@ -315,12 +353,20 @@ class SKMBackend {
       timestamp: new Date().toISOString()
     };
 
-    // Save to Supabase
-    if (this.supabase && this.user?.id) {
-      await this.syncToSupabase('weight_logs', {
-        user_id: this.user.id,
-        ...log
+    // Save locally
+    let history = JSON.parse(localStorage.getItem('skm_weight_logs') || '[]');
+    history.push(log);
+    localStorage.setItem('skm_weight_logs', JSON.stringify(history.slice(-20)));
+
+    // Save to Cloudflare KV
+    try {
+      await fetch('/api/weight-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(log)
       });
+    } catch (e) {
+      console.warn('Failed to sync weight log to Cloudflare:', e);
     }
 
     this.showToast('บันทึกน้ำหนักสำเร็จ! ทีมงานจะติดต่อกลับภายใน 2 ชม.', 'success');
@@ -379,28 +425,28 @@ class SKMBackend {
     if (!coaches || coaches.length === 0) return null;
 
     let selected = null;
-    const currentCode = this.getCoachCode();
 
-    // 1. If user entered a specific coach code
-    if (currentCode) {
-      const cleanCurrent = currentCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
-      const currentDigits = cleanCurrent.replace(/[^0-9]/g, '');
-      selected = coaches.find(c => {
-        if (!c.code) return false;
-        const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
-        const cDigits = cCode.replace(/[^0-9]/g, '');
-        return cCode === cleanCurrent || cCode === 'SKM' + cleanCurrent || (currentDigits && cDigits && currentDigits === cDigits);
-      });
+    // 1. If an active coach was selected/saved in coach-dashboard
+    const savedSelected = localStorage.getItem('selected_coach');
+    if (savedSelected) {
+      try {
+        const parsed = JSON.parse(savedSelected);
+        selected = coaches.find(c => c.id === parsed.id || (c.code && parsed.code && c.code.toUpperCase() === parsed.code.toUpperCase()));
+      } catch (e) {}
     }
 
-    // 2. If a coach was saved in selected_coach
+    // 2. If user entered a specific coach code
     if (!selected) {
-      const savedSelected = localStorage.getItem('selected_coach');
-      if (savedSelected) {
-        try {
-          const parsed = JSON.parse(savedSelected);
-          selected = coaches.find(c => c.id === parsed.id || (c.code && parsed.code && c.code.toUpperCase() === parsed.code.toUpperCase()));
-        } catch (e) {}
+      const currentCode = this.getCoachCode();
+      if (currentCode) {
+        const cleanCurrent = currentCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
+        const currentDigits = cleanCurrent.replace(/[^0-9]/g, '');
+        selected = coaches.find(c => {
+          if (!c.code) return false;
+          const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
+          const cDigits = cCode.replace(/[^0-9]/g, '');
+          return cCode === cleanCurrent || cCode === 'SKM' + cleanCurrent || (currentDigits && cDigits && currentDigits === cDigits);
+        });
       }
     }
 

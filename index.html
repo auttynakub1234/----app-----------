@@ -1124,6 +1124,20 @@
       });
     });
 
+    // Real-time synchronization when dashboard updates data in another tab
+    window.addEventListener('storage', () => {
+      loadCoachInfo();
+      loadBodyShapes();
+      backend.loadCustomBackground();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        loadCoachInfo();
+        loadBodyShapes();
+        backend.loadCustomBackground();
+      }
+    });
+
     // Dynamic Body Shape Selection linked to BMI
     let selectedBodyShape = null;
     let hasUserManuallySelectedShape = false;

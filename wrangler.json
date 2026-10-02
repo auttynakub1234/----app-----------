@@ -1,0 +1,16 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "skm-wellness-app",
+	"main": "worker.js",
+	"compatibility_date": "2024-09-23",
+	"account_id": "9cc36c2affe70cbc040fe3daafa45df4",
+	"assets": {
+		"directory": "./public"
+	},
+	"kv_namespaces": [
+		{
+			"binding": "SKM_KV",
+			"id": "604a047dde1f4ca3a6ee9fdc08efa5af"
+		}
+	]
+}
