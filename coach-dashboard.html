@@ -401,6 +401,15 @@
           </div>
         </div>
 
+        <!-- Developer Role Checkbox -->
+        <div class="flex items-start gap-3 p-3.5 bg-amber-50/70 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-800">
+          <input type="checkbox" id="coach-is-developer" class="w-5 h-5 mt-0.5 rounded text-amber-600 focus:ring-amber-500 cursor-pointer">
+          <label for="coach-is-developer" class="cursor-pointer">
+            <span class="text-sm font-bold text-amber-900 dark:text-amber-200 block">โค้ชผู้พัฒนา (Developer / Admin)</span>
+            <span class="text-xs text-amber-700/80 dark:text-amber-400 block mt-0.5">อนุญาตให้เห็นปุ่มตั้งค่าและสามารถเข้าจัดการระบบหลังบ้านได้ (แยกสิทธิ์จากโค้ชคนอื่น)</span>
+          </label>
+        </div>
+
         <button type="submit" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg transition">
           บันทึกข้อมูล
         </button>
@@ -425,20 +434,12 @@
 
       async syncFromCloudflare() {
         try {
-          const [coachesRes, activeRes] = await Promise.all([
-            fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null),
-            fetch('/api/active-coach').then(r => r.ok ? r.json() : null).catch(() => null)
-          ]);
+          const coachesRes = await fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null);
 
           let changed = false;
           if (coachesRes && coachesRes.success && Array.isArray(coachesRes.data) && coachesRes.data.length > 0) {
             this.coaches = coachesRes.data;
             localStorage.setItem('skm_coaches', JSON.stringify(this.coaches));
-            changed = true;
-          }
-          if (activeRes && activeRes.success && activeRes.data) {
-            localStorage.setItem('selected_coach', JSON.stringify(activeRes.data));
-            if (activeRes.data.code) localStorage.setItem('skm_coach_code', activeRes.data.code);
             changed = true;
           }
           if (changed) {
@@ -460,6 +461,7 @@
             photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
             line: '@coach.nithichai',
             phone: '02-xxx-xxxx',
+            isDeveloper: true,
             createdAt: new Date().toISOString()
           },
           {
@@ -471,6 +473,7 @@
             photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300',
             line: '@coach.ann',
             phone: '081-xxx-xxxx',
+            isDeveloper: false,
             createdAt: new Date().toISOString()
           }
         ];
@@ -546,8 +549,8 @@
         };
         this.coaches.push(newCoach);
         this.saveCoaches();
-        this.setActiveCoach(newCoach.id);
-        this.showToast(`เพิ่มโค้ช "${newCoach.name}" สำเร็จและตั้งเป็นโค้ชหลักแล้ว!`, 'success');
+        this.render();
+        this.showToast(`เพิ่มโค้ช "${newCoach.name}" สำเร็จ! รหัสแนะนำ: ${newCoach.code}`, 'success');
       }
 
       updateCoach(id, data) {
@@ -609,6 +612,19 @@
         }
       }
 
+      copyRefLink(code, name) {
+        const url = `${window.location.origin}/?ref=${encodeURIComponent(code)}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(() => {
+            this.showToast(`คัดลอกลิงก์แนะนำของ "${name}" แล้ว!`, 'success');
+          }).catch(() => {
+            prompt('คัดลอกลิงก์นี้ไปส่งให้ลูกค้า:', url);
+          });
+        } else {
+          prompt('คัดลอกลิงก์นี้ไปส่งให้ลูกค้า:', url);
+        }
+      }
+
       getCoachByCode(code) {
         return this.coaches.find(c => c.code.toUpperCase() === code.toUpperCase());
       }
@@ -626,17 +642,9 @@
           return;
         }
 
-        const activeId = this.getActiveCoachId();
-
         container.innerHTML = this.coaches.map(coach => {
-          const isActive = coach.id === activeId;
           return `
-          <div class="coach-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 space-y-4 relative ${isActive ? 'ring-2 ring-sky-500 bg-sky-50/20' : ''}">
-            ${isActive ? `
-              <div class="absolute -top-3 right-4 px-3 py-1 bg-gradient-to-r from-sky-500 to-blue-600 text-white text-[11px] font-bold rounded-full shadow flex items-center gap-1">
-                <i class="ph ph-check-circle font-bold"></i> แสดงผลที่หน้าแรก
-              </div>
-            ` : ''}
+          <div class="coach-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 space-y-4 relative">
             <div class="flex items-start gap-4">
               <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-sky-500 shrink-0">
                 <img src="${coach.photo}" class="w-full h-full object-cover" alt="${coach.name}">
@@ -644,8 +652,19 @@
               <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-lg truncate">${coach.name}</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400">${coach.title}</p>
-                <div class="mt-2 inline-block px-2 py-1 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-xs font-bold rounded-lg">
-                  ${coach.code}
+                <div class="mt-2 flex items-center gap-2 flex-wrap">
+                  <div class="inline-block px-2 py-1 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 text-xs font-bold rounded-lg">
+                    ${coach.code}
+                  </div>
+                  ${coach.isDeveloper ? `
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                      <i class="ph ph-shield-check"></i> ผู้พัฒนา (Developer)
+                    </span>
+                  ` : `
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300">
+                      โค้ชทั่วไป
+                    </span>
+                  `}
                 </div>
               </div>
             </div>
@@ -660,15 +679,23 @@
             </div>
 
             <div class="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
-              ${!isActive ? `
-                <button onclick="coachManager.setActiveCoach('${coach.id}')" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
-                  <i class="ph ph-star font-bold"></i> ตั้งเป็นโค้ชหลักหน้าแรก
-                </button>
-              ` : `
-                <div class="w-full py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold text-center flex items-center justify-center gap-1">
-                  <i class="ph ph-check-circle"></i> กำลังแสดงผลที่หน้าแรก
+              <!-- Personal Referral Link Section -->
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                    <i class="ph ph-link text-sm text-sky-500"></i> ลิงก์แนะนำประจำตัวโค้ช
+                  </span>
+                  <span class="text-[10px] text-sky-600 dark:text-sky-400 font-mono font-bold">?ref=${coach.code}</span>
                 </div>
-              `}
+                <div class="flex gap-2">
+                  <button onclick="coachManager.copyRefLink('${coach.code}', '${coach.name}')" class="flex-1 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="ph ph-copy"></i> คัดลอกลิงก์ส่งลูกค้า
+                  </button>
+                  <a href="/?ref=${coach.code}" target="_blank" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1" title="เปิดดูมุมมองลูกค้า">
+                    <i class="ph ph-arrow-square-out"></i> ดูหน้าเว็บ
+                  </a>
+                </div>
+              </div>
               <div class="flex gap-2">
                 <button onclick="coachManager.editCoach('${coach.id}')" class="flex-1 py-2 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 rounded-xl text-sm font-medium hover:bg-sky-200 dark:hover:bg-sky-900/50 transition flex items-center justify-center gap-1">
                   <i class="ph ph-pencil"></i> แก้ไข
@@ -696,6 +723,8 @@
         document.getElementById('coach-quote').value = coach.quote || '';
         document.getElementById('coach-line').value = coach.line || '';
         document.getElementById('coach-phone').value = coach.phone || '';
+        const devCheckbox = document.getElementById('coach-is-developer');
+        if (devCheckbox) devCheckbox.checked = Boolean(coach.isDeveloper);
 
         const previewContainer = document.getElementById('photo-preview');
         const previewImg = document.getElementById('photo-preview-img');
@@ -737,6 +766,8 @@
       document.getElementById('coach-modal').classList.add('hidden');
       document.getElementById('coach-form').reset();
       document.getElementById('coach-id').value = '';
+      const devCheckbox = document.getElementById('coach-is-developer');
+      if (devCheckbox) devCheckbox.checked = false;
       const previewContainer = document.getElementById('photo-preview');
       const previewImg = document.getElementById('photo-preview-img');
       if (previewContainer) previewContainer.classList.add('hidden');
@@ -800,6 +831,7 @@
         quote: document.getElementById('coach-quote').value.trim(),
         line: document.getElementById('coach-line').value.trim(),
         phone: document.getElementById('coach-phone').value.trim(),
+        isDeveloper: Boolean(document.getElementById('coach-is-developer') && document.getElementById('coach-is-developer').checked),
         photo: photoUrl
       };
 
@@ -1047,6 +1079,15 @@
                   <span class="w-6 h-6 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-300 text-xs font-bold flex items-center justify-center">${contacts.length - index}</span>
                   <span class="font-semibold text-slate-800 dark:text-slate-100">${c.name || 'ผู้ประเมินสุขภาพ'}</span>
                   <span class="text-[11px] text-slate-400">${dateStr}</span>
+                  ${(c.coach_code || c.coach_name) ? `
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${c.coach_code ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}">
+                      <i class="ph ph-user"></i> แนะนำโดย: ${c.coach_name || c.coach_code}
+                    </span>
+                  ` : `
+                    <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-400">
+                      ส่วนกลาง (ไม่มีโค้ช)
+                    </span>
+                  `}
                 </div>
                 <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-300 ml-8">
                   ${c.phone ? `<span class="flex items-center gap-1"><i class="ph ph-phone text-sky-500"></i> ${c.phone}</span>` : ''}

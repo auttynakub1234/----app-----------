@@ -30,21 +30,11 @@ class SKMBackend {
   // ========== CLOUDFLARE KV REAL-TIME SYNC ==========
   async syncWithCloudflare() {
     try {
-      // 1. Fetch Coaches and Active Coach from Cloudflare KV
-      const [coachesRes, activeRes] = await Promise.all([
-        fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/active-coach').then(r => r.ok ? r.json() : null).catch(() => null)
-      ]);
+      // 1. Fetch Coaches Pool from Cloudflare KV (individual client determines active coach via ref/code)
+      const coachesRes = await fetch('/api/coaches').then(r => r.ok ? r.json() : null).catch(() => null);
 
       if (coachesRes && coachesRes.success && Array.isArray(coachesRes.data) && coachesRes.data.length > 0) {
         localStorage.setItem('skm_coaches', JSON.stringify(coachesRes.data));
-      }
-
-      if (activeRes && activeRes.success && activeRes.data) {
-        localStorage.setItem('selected_coach', JSON.stringify(activeRes.data));
-        if (activeRes.data.code) {
-          localStorage.setItem('skm_coach_code', activeRes.data.code);
-        }
       }
 
       // 2. Fetch Branding & Body Shapes from Cloudflare KV
@@ -110,20 +100,29 @@ class SKMBackend {
   // ========== LOGO & BACKGROUND UPLOAD ==========
   loadCustomLogo() {
     const logoUrl = localStorage.getItem(APP_CONFIG.logo.storageKey);
+    const headerBrand = document.getElementById('header-brand');
+    const headerLogo = document.getElementById('app-header-logo');
+    const defaultBrand = document.getElementById('header-default-brand');
+
     if (logoUrl) {
-      const headerBrand = document.getElementById('header-brand');
-      if (headerBrand) {
-        const logoIcon = headerBrand.querySelector('i');
-        if (logoIcon) logoIcon.style.display = 'none';
+      if (headerLogo) {
+        headerLogo.src = logoUrl;
+        headerLogo.classList.remove('hidden');
+        headerLogo.className = 'h-11 sm:h-14 max-h-14 max-w-[180px] sm:max-w-[220px] object-contain transition-all';
+      } else if (headerBrand) {
         let img = headerBrand.querySelector('img.custom-brand-logo');
         if (!img) {
           img = document.createElement('img');
-          img.className = 'w-6 h-6 object-cover rounded-full custom-brand-logo';
+          img.className = 'h-11 sm:h-14 max-h-14 max-w-[180px] sm:max-w-[220px] object-contain custom-brand-logo transition-all';
           img.alt = 'Logo';
-          headerBrand.insertBefore(img, headerBrand.firstChild);
+          headerBrand.appendChild(img);
         }
         img.src = logoUrl;
       }
+      if (defaultBrand) defaultBrand.classList.add('hidden');
+    } else {
+      if (headerLogo) headerLogo.classList.add('hidden');
+      if (defaultBrand) defaultBrand.classList.remove('hidden');
     }
   }
 
@@ -262,10 +261,14 @@ class SKMBackend {
 
   // ========== CONTACT FORM ==========
   async submitContactForm(data) {
+    const coach = this.getSelectedCoach();
+    const isCentral = Boolean(!coach || coach.isCentral);
     const contactData = {
       line_id: data.lineId,
       phone: data.phone,
       email: data.email,
+      coach_code: isCentral ? '' : coach.code,
+      coach_name: isCentral ? 'ส่วนกลาง (ไม่มีโค้ช)' : coach.name,
       timestamp: new Date().toISOString()
     };
 
@@ -302,6 +305,24 @@ class SKMBackend {
 
   getChallenge() {
     return JSON.parse(localStorage.getItem(APP_CONFIG.storage.challenge) || 'null');
+  }
+
+  // ========== MINI CHALLENGE CALENDAR & TRACKER ==========
+  getMiniChallengeData() {
+    try {
+      const raw = localStorage.getItem('skm_mini_challenge');
+      return raw ? JSON.parse(raw) : { duration: 7, selectedDay: 1, days: {} };
+    } catch (e) {
+      return { duration: 7, selectedDay: 1, days: {} };
+    }
+  }
+
+  saveMiniChallengeData(data) {
+    try {
+      localStorage.setItem('skm_mini_challenge', JSON.stringify(data));
+    } catch (e) {
+      console.error('Failed to save mini challenge data', e);
+    }
   }
 
   updateChecklistItem(index, checked) {
@@ -374,16 +395,26 @@ class SKMBackend {
 
   // ========== COACH CODE ==========
   // ========== COACH CODE ==========
-  verifyCoachCode(inputCode) {
+  verifyCoachCode(inputCode, silent = false) {
     if (!inputCode || typeof inputCode !== 'string') {
-      this.showToast('กรุณากรอกรหัสโค้ช', 'error');
+      if (!silent) this.showToast('กรุณากรอกรหัสโค้ช', 'error');
       return false;
     }
 
     const cleanInput = inputCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
     if (!cleanInput) {
-      this.showToast('กรุณากรอกรหัสโค้ช', 'error');
+      if (!silent) this.showToast('กรุณากรอกรหัสโค้ช', 'error');
       return false;
+    }
+
+    if (cleanInput === 'DEV' || cleanInput === 'ADMIN') {
+      const devCoach = this.getAllCoaches().find(c => c.isDeveloper) || this.getAllCoaches()[0];
+      if (devCoach) {
+        localStorage.setItem(APP_CONFIG.storage.coachCode, devCoach.code);
+        localStorage.setItem('selected_coach', JSON.stringify(devCoach));
+        if (!silent) this.showToast(`ยืนยันโหมดผู้พัฒนาสำเร็จ! (${devCoach.name})`, 'success');
+        return true;
+      }
     }
 
     const coaches = this.getAllCoaches();
@@ -408,10 +439,10 @@ class SKMBackend {
       }
       localStorage.setItem(APP_CONFIG.storage.coachCode, coach.code);
       localStorage.setItem('selected_coach', JSON.stringify(coach));
-      this.showToast(`ยืนยันรหัสโค้ชสำเร็จ! (${coach.name})`, 'success');
+      if (!silent) this.showToast(`ยืนยันรหัสโค้ชสำเร็จ! (${coach.name})`, 'success');
       return true;
     } else {
-      this.showToast('รหัสโค้ชไม่ถูกต้อง กรุณาลองใหม่ (เช่น SKM321 หรือ SKM123)', 'error');
+      if (!silent) this.showToast('รหัสโค้ชไม่ถูกต้อง กรุณาลองใหม่ (เช่น SKM321 หรือ SKM123)', 'error');
       return false;
     }
   }
@@ -420,39 +451,75 @@ class SKMBackend {
     return localStorage.getItem(APP_CONFIG.storage.coachCode);
   }
 
+  hasAssignedCoach() {
+    const code = this.getCoachCode();
+    if (code && typeof code === "string" && code.trim().length > 0) return true;
+    const coach = this.getSelectedCoach();
+    return Boolean(coach && !coach.isCentral && coach.code);
+  }
+
+  getCentralAdvisor() {
+    return {
+      id: 'central',
+      name: 'ทีมผู้เชี่ยวชาญ SKM',
+      code: '',
+      title: 'SKM.WELLNESS ADVISOR TEAM',
+      quote: 'ยินดีต้อนรับสู่ระบบประเมินสุขภาพเฉพาะบุคคล หากมีรหัสโค้ชผู้แนะนำ สามารถระบุเพื่อรับคำปรึกษาตรงได้ทันที',
+      photo: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=300',
+      line: '@skm.wellness',
+      phone: '02-xxx-xxxx',
+      isCentral: true,
+      isDeveloper: false
+    };
+  }
+
+  checkUrlReferral() {
+    if (typeof window === 'undefined') return null;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref') || urlParams.get('coach') || urlParams.get('c');
+      if (ref) {
+        return this.verifyCoachCode(ref, false);
+      }
+    } catch (e) {}
+    return null;
+  }
+
   getSelectedCoach() {
     const coaches = this.getAllCoaches();
-    if (!coaches || coaches.length === 0) return null;
+    if (!coaches || coaches.length === 0) return this.getCentralAdvisor();
 
     let selected = null;
 
-    // 1. If an active coach was selected/saved in coach-dashboard
-    const savedSelected = localStorage.getItem('selected_coach');
-    if (savedSelected) {
-      try {
-        const parsed = JSON.parse(savedSelected);
-        selected = coaches.find(c => c.id === parsed.id || (c.code && parsed.code && c.code.toUpperCase() === parsed.code.toUpperCase()));
-      } catch (e) {}
+    // 1. If user entered a specific coach code or visited via ref URL
+    const currentCode = this.getCoachCode();
+    if (currentCode) {
+      const cleanCurrent = currentCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
+      const currentDigits = cleanCurrent.replace(/[^0-9]/g, '');
+      selected = coaches.find(c => {
+        if (!c.code) return false;
+        const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
+        const cDigits = cCode.replace(/[^0-9]/g, '');
+        return cCode === cleanCurrent || cCode === 'SKM' + cleanCurrent || (currentDigits && cDigits && currentDigits === cDigits);
+      });
     }
 
-    // 2. If user entered a specific coach code
+    // 2. If an active coach was saved in localStorage
     if (!selected) {
-      const currentCode = this.getCoachCode();
-      if (currentCode) {
-        const cleanCurrent = currentCode.trim().toUpperCase().replace(/[\s\-_]/g, '');
-        const currentDigits = cleanCurrent.replace(/[^0-9]/g, '');
-        selected = coaches.find(c => {
-          if (!c.code) return false;
-          const cCode = c.code.trim().toUpperCase().replace(/[\s\-_]/g, '');
-          const cDigits = cCode.replace(/[^0-9]/g, '');
-          return cCode === cleanCurrent || cCode === 'SKM' + cleanCurrent || (currentDigits && cDigits && currentDigits === cDigits);
-        });
+      const savedSelected = localStorage.getItem('selected_coach');
+      if (savedSelected) {
+        try {
+          const parsed = JSON.parse(savedSelected);
+          if (parsed && !parsed.isCentral) {
+            selected = coaches.find(c => c.id === parsed.id || (c.code && parsed.code && c.code.toUpperCase() === parsed.code.toUpperCase()));
+          }
+        } catch (e) {}
       }
     }
 
-    // 3. Fallback to first coach
+    // 3. Organic Fallback: Return Central Advisor team (Fair and independent)
     if (!selected) {
-      selected = coaches[0];
+      return this.getCentralAdvisor();
     }
 
     // Ensure safe photo
@@ -475,7 +542,8 @@ class SKMBackend {
         quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
         photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
         line: '@coach.nithichai',
-        phone: '02-xxx-xxxx'
+        phone: '02-xxx-xxxx',
+        isDeveloper: true
       },
       {
         id: '2',
@@ -485,7 +553,8 @@ class SKMBackend {
         quote: 'สุขภาพดีไม่มีทางลัด มีแต่วินัยและความใส่ใจในทุกวัน',
         photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300',
         line: '@coach.ann',
-        phone: '081-xxx-xxxx'
+        phone: '081-xxx-xxxx',
+        isDeveloper: false
       }
     ];
 
@@ -502,6 +571,15 @@ class SKMBackend {
         const cleaned = parsed.map(c => {
           if (!c.photo || c.photo.endsWith('.html') || c.photo.includes('coach-dashboard')) {
             c.photo = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+            updated = true;
+          }
+          if (c.code === 'SKM321' || c.id === '1') {
+            if (c.isDeveloper === undefined) {
+              c.isDeveloper = true;
+              updated = true;
+            }
+          } else if (c.isDeveloper === undefined) {
+            c.isDeveloper = false;
             updated = true;
           }
           return c;

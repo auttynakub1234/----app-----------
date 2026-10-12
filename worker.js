@@ -12,7 +12,8 @@ const DEFAULT_COACHES = [
     quote: 'ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้',
     photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
     line: '@coach.nithichai',
-    phone: '02-xxx-xxxx'
+    phone: '02-xxx-xxxx',
+    isDeveloper: true
   },
   {
     id: '2',
@@ -22,7 +23,8 @@ const DEFAULT_COACHES = [
     quote: 'สุขภาพดีไม่มีทางลัด มีแต่วินัยและความใส่ใจในทุกวัน',
     photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300',
     line: '@coach.ann',
-    phone: '081-xxx-xxxx'
+    phone: '081-xxx-xxxx',
+    isDeveloper: false
   }
 ];
 
@@ -63,7 +65,11 @@ async function handleApi(request, env, url) {
     if (path === '/api/coaches') {
       if (request.method === 'GET') {
         const stored = await env.SKM_KV.get('skm_coaches', 'json');
-        const coaches = (stored && Array.isArray(stored) && stored.length > 0) ? stored : DEFAULT_COACHES;
+        let coaches = (stored && Array.isArray(stored) && stored.length > 0) ? stored : DEFAULT_COACHES;
+        coaches = coaches.map(c => ({
+          ...c,
+          isDeveloper: (c.code === 'SKM321' || c.id === '1') ? (c.isDeveloper !== undefined ? c.isDeveloper : true) : Boolean(c.isDeveloper)
+        }));
         return jsonResponse({ success: true, data: coaches });
       }
 
@@ -101,7 +107,13 @@ async function handleApi(request, env, url) {
     if (path === '/api/bodyshapes') {
       if (request.method === 'GET') {
         const stored = await env.SKM_KV.get('body_shapes', 'json');
-        return jsonResponse({ success: true, data: stored || {} });
+        const defaults = {
+          normal: { image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400", size: "รอบเอว 24-26 นิ้ว" },
+          thin: { image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400", size: "รอบเอว < 23 นิ้ว" },
+          fat: { image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400", size: "รอบเอว > 30 นิ้ว" }
+        };
+        const data = { ...defaults, ...(stored || {}) };
+        return jsonResponse({ success: true, data });
       }
 
       if (request.method === 'POST') {
@@ -193,6 +205,29 @@ async function handleApi(request, env, url) {
         const trimmed = stored.slice(-100);
         await env.SKM_KV.put('weight_logs', JSON.stringify(trimmed));
         return jsonResponse({ success: true, message: 'Weight log saved' });
+      }
+    }
+
+    // 7. Proxy Image for CORS-free Canvas Export (/api/proxy-image)
+    if (path === '/api/proxy-image') {
+      const targetUrl = url.searchParams.get('url');
+      if (!targetUrl) return jsonResponse({ error: 'Missing url parameter' }, 400);
+      try {
+        const res = await fetch(targetUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
+        if (!res.ok) return jsonResponse({ error: 'Failed to fetch image' }, 502);
+        const contentType = res.headers.get('content-type') || 'image/jpeg';
+        const arrayBuffer = await res.arrayBuffer();
+        return new Response(arrayBuffer, {
+          headers: {
+            'Content-Type': contentType,
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'public, max-age=86400'
+          }
+        });
+      } catch (err) {
+        return jsonResponse({ error: err.message }, 500);
       }
     }
 

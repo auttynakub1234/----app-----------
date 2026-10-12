@@ -27,6 +27,8 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- HTML2Canvas for Real Image Export -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <!-- Google Fonts Prompt & Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,27 +49,38 @@
   <!-- Mobile Frame Screen -->
   <div class="w-full max-w-[420px] bg-white dark:bg-slate-900 min-h-screen shadow-2xl flex flex-col relative pb-20 overflow-x-hidden border-x border-slate-200/60 dark:border-slate-800">
 
-    <!-- Top System Dynamic Bar -->
-    <header class="h-12 px-4 flex items-center justify-between sticky top-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md z-30 border-b border-slate-100/50 dark:border-slate-800/50">
-      <div id="header-back-btn" class="hidden">
-        <button onclick="goBack()" class="p-1 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400">
+    <!-- Top System Dynamic Bar (Spacious Header with Large Full Logo) -->
+    <header class="h-16 sm:h-20 px-4 py-2 flex items-center justify-between sticky top-0 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md z-30 border-b border-slate-100/60 dark:border-slate-800 transition-all">
+      <div id="header-back-btn" class="hidden mr-2 shrink-0">
+        <button onclick="goBack()" class="p-1.5 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">
           <i class="ph ph-caret-left text-xl font-bold"></i>
         </button>
       </div>
-      <div id="header-brand" class="flex-1">
-        <!-- Brand and logo removed as requested, leaving controls only -->
+      
+      <!-- Brand & Full Large Logo (No circular crop) -->
+      <div id="header-brand" class="flex-1 flex items-center overflow-hidden py-0.5">
+        <img id="app-header-logo" src="" class="hidden h-11 sm:h-14 max-h-14 max-w-[180px] sm:max-w-[220px] object-contain transition-all" alt="Logo">
+        <div id="header-default-brand" class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/25 shrink-0">
+            <i class="ph ph-heartbeat text-2xl"></i>
+          </div>
+          <div class="leading-tight">
+            <span class="font-bold text-sm sm:text-base text-slate-800 dark:text-white block">สูตรคุณหมอ</span>
+            <span class="text-[10px] text-sky-600 dark:text-sky-400 font-semibold block tracking-wider">SKM.WELLNESS</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Controls + Floating Profile Picture on the right side -->
-      <div class="flex items-center gap-2">
-        <button onclick="backend.toggleTheme()" class="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดสี">
-          <i id="theme-btn-icon" class="ph ph-moon text-sm"></i>
+      <!-- Controls + Profile Picture on the right side -->
+      <div class="flex items-center gap-2 shrink-0 ml-2">
+        <button onclick="backend.toggleTheme()" class="w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center text-slate-600 dark:text-amber-400 hover:scale-105 transition" title="สลับโหมดสี">
+          <i id="theme-btn-icon" class="ph ph-moon text-base"></i>
         </button>
-        <a href="coach-login.html" class="w-8 h-8 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur flex items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 transition" title="ผู้ดูแลระบบ (Admin)">
-          <i class="ph ph-gear text-sm"></i>
+        <a id="admin-settings-btn" href="coach-login.html" class="hidden w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur items-center justify-center text-slate-600 dark:text-slate-400 hover:text-sky-600 transition" title="ผู้ดูแลระบบ (Admin)">
+          <i class="ph ph-gear text-base"></i>
         </a>
         <!-- Floating circular user profile on the right side -->
-        <div id="floating-profile" onclick="goToScreen(16)" class="w-8 h-8 rounded-full overflow-hidden border-2 border-sky-500 shadow-sm cursor-pointer hover:ring-2 hover:ring-sky-400 transition shrink-0" title="โปรไฟล์">
+        <div id="floating-profile" onclick="handleProfileClick(event)" class="w-9 h-9 rounded-full overflow-hidden border-2 border-sky-500 shadow-sm cursor-pointer hover:ring-2 hover:ring-sky-400 transition shrink-0 select-none" title="โปรไฟล์">
           <img id="user-header-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover" alt="User Profile">
         </div>
       </div>
@@ -77,7 +90,7 @@
     <main class="flex-1 overflow-y-auto">
 
       <!-- ================= 1. หน้าแรก (ประเมินสุขภาพ) ================= -->
-      <section id="screen-1" class="screen min-h-[calc(100vh-3rem)] flex flex-col justify-end p-5 pb-6 relative overflow-hidden bg-cover bg-top bg-no-repeat transition-all duration-300" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.85) 65%, rgba(255,255,255,0.98) 100%), url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800');">
+      <section id="screen-1" class="screen min-h-[calc(100vh-4rem)] flex flex-col justify-end p-5 pb-6 relative overflow-hidden bg-cover bg-top bg-no-repeat transition-all duration-300" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.85) 65%, rgba(255,255,255,0.98) 100%), url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800');">
         
         <!-- Top Empty Space: showcases the background image (upper body of person in white top) -->
         <div class="h-44 sm:h-56 w-full flex-1"></div>
@@ -118,18 +131,18 @@
             </div>
           </div>
 
-          <!-- Coach Profile Card (Coach Nithichai) -->
-          <div id="home-coach-card" class="p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-sky-200/80 dark:border-slate-700 shadow-sm flex items-center gap-3">
+          <!-- Coach Profile Card (Shown ONLY when actual coach referral/code is present) -->
+          <div id="home-coach-card" class="hidden p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-sky-200/80 dark:border-slate-700 shadow-sm items-center gap-3">
             <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-sky-500 shrink-0 shadow">
-              <img id="coach-photo-1" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover" alt="Coach Nithichai">
+              <img id="coach-photo-1" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-full h-full object-cover" alt="Coach">
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span id="coach-name-1" class="text-xs font-bold text-slate-800 dark:text-white truncate">โค้ช Nithichai</span>
-                <span id="coach-code-1" class="px-1.5 py-0.5 bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-[10px] font-bold rounded">SKM321</span>
+                <span id="coach-name-1" class="text-xs font-bold text-slate-800 dark:text-white truncate"></span>
+                <span id="coach-code-1" class="px-1.5 py-0.5 bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-[10px] font-bold rounded"></span>
               </div>
-              <p id="coach-title-1" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">SKM.WELLNESS COACH</p>
-              <p id="coach-quote-1" class="text-[10px] italic text-sky-600 dark:text-sky-400 truncate mt-0.5">ดูแลคุณเหมือนคนในครอบครัว เพราะเราเชื่อว่า... ทุกคนทำได้</p>
+              <p id="coach-title-1" class="text-[10px] text-slate-500 dark:text-slate-400 truncate"></p>
+              <p id="coach-quote-1" class="text-[10px] italic text-sky-600 dark:text-sky-400 truncate mt-0.5"></p>
             </div>
           </div>
 
@@ -152,13 +165,15 @@
         <div class="space-y-4">
           <div>
             <label class="text-xs text-slate-500 font-medium">⚖️ น้ำหนัก (กก.)</label>
-            <input type="number" id="input-weight" value="60" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
+            <input type="number" id="input-weight" value="60" oninput="saveInputsAndSync()" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
           <div>
             <label class="text-xs text-slate-500 font-medium">📏 ส่วนสูง (ซม.)</label>
-            <input type="number" id="input-height" value="165" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
+            <input type="number" id="input-height" value="165" oninput="saveInputsAndSync()" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
           </div>
-          <button onclick="calcBMIAction()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow transition">คำนวณ BMI</button>
+          <button onclick="onUserClickCalculateBMI()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow transition flex items-center justify-center gap-2 active:scale-[0.99]">
+            <i class="ph ph-calculator font-bold"></i> คำนวณ BMI
+          </button>
         </div>
 
         <!-- BMI Result Display Card -->
@@ -184,181 +199,266 @@
           <p id="display-bmi-text" class="text-xs text-emerald-600 font-medium">อยู่ในเกณฑ์ปกติ รักษาคุณค่าสุขภาพดีต่อเนื่องนะคะ</p>
         </div>
 
-        <button onclick="goToScreen(3)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">ทำความเข้าใจค่า BMI &gt;</button>
+        <!-- ข้อมูลทำความเข้าใจเกณฑ์ค่า BMI (สามารถกดดูเพิ่มเติมได้) -->
+        <details class="group bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
+          <summary class="p-3.5 font-bold cursor-pointer text-slate-600 dark:text-slate-300 flex items-center justify-between select-none hover:text-sky-600 transition">
+            <span class="flex items-center gap-1.5"><i class="ph ph-info text-sky-500 font-bold"></i> ทำความเข้าใจเกณฑ์ค่า BMI เพิ่มเติม</span>
+            <i class="ph ph-caret-down group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <div class="p-4 pt-1 space-y-2 border-t border-slate-200 dark:border-slate-700">
+            <div class="p-2.5 rounded-xl border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+              <div class="flex items-center justify-between font-bold text-blue-700 dark:text-blue-300">
+                <span>ต่ำกว่า 18.5</span>
+                <span>ผอม / น้ำหนักน้อย</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">เสี่ยงขาดสารอาหาร ควรเพิ่มกล้ามเนื้อ</p>
+            </div>
+            <div class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <div class="flex items-center justify-between font-bold text-emerald-700 dark:text-emerald-300">
+                <span>18.5 - 22.9</span>
+                <span>ปกติ</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">สุขภาพดี ควรรักษาระดับนี้ไว้ต่อเนื่อง</p>
+            </div>
+            <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+              <div class="flex items-center justify-between font-bold text-amber-700 dark:text-amber-300">
+                <span>23 - 24.9</span>
+                <span>น้ำหนักเกิน</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">เริ่มอ้วน ควรปรับพฤติกรรมการกินและออกกำลังกาย</p>
+            </div>
+            <div class="p-2.5 rounded-xl border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
+              <div class="flex items-center justify-between font-bold text-orange-700 dark:text-orange-300">
+                <span>25 - 29.9</span>
+                <span>อ้วน</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">เสี่ยงโรคเรื้อรัง ควรลดน้ำหนักอย่างถูกวิธี</p>
+            </div>
+            <div class="p-2.5 rounded-xl border border-rose-200 bg-rose-50/50 dark:bg-rose-950/20">
+              <div class="flex items-center justify-between font-bold text-rose-700 dark:text-rose-300">
+                <span>30 ขึ้นไป</span>
+                <span>อ้วนมาก</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">เสี่ยงต่อโรคร้ายแรง ควรปรึกษาแพทย์หรือผู้เชี่ยวชาญ</p>
+            </div>
+          </div>
+        </details>
       </section>
 
-      <!-- ================= 3. ทำความเข้าใจค่า BMI ================= -->
-      <section id="screen-3" class="screen p-5 space-y-4 hidden">
-        <div class="text-center">
-          <h2 class="text-xl font-bold">ทำความเข้าใจค่า BMI</h2>
-          <p class="text-xs text-slate-400">BMI บอกอะไรเราได้บ้าง?</p>
+      <!-- ================= 5. Mini Challenge ปฏิทินดูแลตัวเอง ================= -->
+      <section id="screen-5" class="screen p-5 space-y-4 hidden">
+        <!-- Header -->
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
+            <i class="ph ph-calendar-check text-sm"></i>
+            <span>Mini Challenge ปฏิทินดูแลตัวเอง</span>
+          </div>
+          <h2 class="text-xl font-black text-slate-800 dark:text-white">ดูแลตัวเอง...ทำได้ทุกวัน</h2>
+          <p class="text-xs text-slate-400">สร้างวินัยสุขภาพดี ติ๊กความสำเร็จและบันทึกความคืบหน้ารายวัน</p>
         </div>
 
-        <div class="space-y-3">
-          <div class="p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
-            <div class="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-blue-300">
-              <span>ต่ำกว่า 18.5</span>
-              <span>ผอม / น้ำหนักน้อย</span>
+        <!-- Coach Card / Greeting Banner -->
+        <div id="challenge-coach-banner" class="p-3.5 bg-gradient-to-r from-sky-50 via-teal-50 to-emerald-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-sky-100 dark:border-slate-700 flex items-center gap-3 shadow-sm">
+          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-slate-600 shadow shrink-0">
+            <img id="coach-photo-5" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" class="w-full h-full object-cover" alt="Coach">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-bold">Coach</span>
+              <h4 id="coach-name-5" class="font-bold text-xs text-slate-800 dark:text-white truncate">สวัสดีค่ะ โค้ชแอน</h4>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงขาดสารอาหาร ควรเพิ่มกล้ามเนื้อ</p>
-          </div>
-
-          <div class="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/20">
-            <div class="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-300">
-              <span>18.5 - 22.9</span>
-              <span>ปกติ</span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-1">สุขภาพดี ควรรักษาระดับนี้ไว้ต่อเนื่อง</p>
-          </div>
-
-          <div class="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
-            <div class="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-300">
-              <span>23 - 24.9</span>
-              <span>น้ำหนักเกิน</span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-1">เริ่มอ้วน ควรปรับพฤติกรรมการกินและออกกำลังกาย</p>
-          </div>
-
-          <div class="p-3.5 rounded-2xl border border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
-            <div class="flex items-center justify-between text-xs font-bold text-orange-700 dark:text-orange-300">
-              <span>25 - 29.9</span>
-              <span>อ้วน</span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงโรคเรื้อรัง ควรลดน้ำหนักอย่างถูกวิธี</p>
-          </div>
-
-          <div class="p-3.5 rounded-2xl border border-rose-200 bg-rose-50/50 dark:bg-rose-950/20">
-            <div class="flex items-center justify-between text-xs font-bold text-rose-700 dark:text-rose-300">
-              <span>30 ขึ้นไป</span>
-              <span>อ้วนมาก</span>
-            </div>
-            <p class="text-[11px] text-slate-500 mt-1">เสี่ยงต่อโรคร้ายแรง ควรปรึกษาแพทย์หรือผู้เชี่ยวชาญ</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">ผู้เชี่ยวชาญ SKM.WELLNESS — เป็นกำลังใจให้ทุกวันนะคะ ✨</p>
           </div>
         </div>
 
-        <button onclick="goToScreen(4)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow mt-2">ถัดไป: สนใจดูแลสุขภาพกับเรา</button>
-      </section>
-
-      <!-- ================= 4. สนใจดูแลสุขภาพกับเรา (สมัครรับข้อมูล) ================= -->
-      <section id="screen-4" class="screen p-5 space-y-5 hidden">
-        <div class="text-center">
-          <h2 class="text-xl font-bold">สนใจดูแลสุขภาพกับเรา</h2>
-          <p class="text-xs text-slate-400">กรอกข้อมูลเพื่อรับคำแนะนำและข้อมูลเพิ่มเติม</p>
-        </div>
-
-        <div class="space-y-3.5">
-          <div>
-            <label class="text-xs font-medium text-slate-500">💬 LINE ID</label>
-            <input type="text" placeholder="กรอก LINE ID" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
+        <!-- Duration Selector Tabs (3 วัน / 7 วัน / 14 วัน / 30 วัน) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+              <i class="ph ph-hourglass-high text-sky-500"></i> เลือกระยะเวลาของชาเลนจ์:
+            </span>
+            <span id="challenge-duration-label" class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">7 วัน</span>
           </div>
-          <div>
-            <label class="text-xs font-medium text-slate-500">📞 เบอร์โทรศัพท์</label>
-            <input type="tel" placeholder="กรอกเบอร์โทรศัพท์" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-500">✉️ อีเมล</label>
-            <input type="email" placeholder="กรอกอีเมล" class="w-full mt-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
-          </div>
-        </div>
-
-        <button onclick="submitContactForm()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ส่งข้อมูล</button>
-        <p class="text-[10px] text-center text-slate-400">ข้อมูลของคุณจะถูกเก็บเป็นความลับ และใช้เพื่อการดูแลสุขภาพเท่านั้น</p>
-      </section>
-
-      <!-- ================= 5. Mini Challenge ================= -->
-      <section id="screen-5" class="screen p-5 space-y-5 hidden">
-        <div class="text-center">
-          <h2 class="text-xl font-bold">Mini Challenge</h2>
-          <p class="text-xs text-slate-400">ดูแลตัวเอง...ทำได้ทุกวัน</p>
-        </div>
-
-        <div class="p-3 bg-sky-50 dark:bg-slate-800 rounded-2xl flex items-center gap-3 border border-sky-100 dark:border-slate-700">
-          <div class="w-10 h-10 rounded-full bg-slate-300 overflow-hidden shrink-0">
-            <img id="coach-photo-5" src="https://images.unsplash.com/photo-1594824813501-48af529a6b98?w=100" class="w-full h-full object-cover" alt="Coach">
-          </div>
-          <div>
-            <p id="coach-name-5" class="text-xs font-bold">สวัสดีค่ะ โค้ชแอน</p>
-            <p class="text-[10px] text-slate-400">ผู้เชี่ยวชาญ SKM.WELLNESS</p>
-          </div>
-        </div>
-
-        <div class="space-y-2.5">
-          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
-            <input type="checkbox" id="check-0" class="w-4 h-4 text-sky-600 rounded">
-            <span class="text-xs">กินอาหารครบ 3 มื้อ (ไม่ข้ามมื้อ)</span>
-          </label>
-          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
-            <input type="checkbox" id="check-1" class="w-4 h-4 text-sky-600 rounded">
-            <span class="text-xs">ออกกำลังกายอย่างน้อย 10 นาที</span>
-          </label>
-          <label class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer">
-            <input type="checkbox" id="check-2" class="w-4 h-4 text-sky-600 rounded">
-            <span class="text-xs">ดื่มน้ำให้ครบ 8 แก้ว / วัน</span>
-          </label>
-        </div>
-
-        <div>
-          <p class="text-xs font-bold mb-2">เลือกระยะเวลาของชาเลนจ์</p>
-          <div class="grid grid-cols-3 gap-2">
-            <button onclick="setChallengeDays(3)" id="btn-day-3" class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-center hover:border-sky-600 transition">
-              <span class="text-lg">🥉</span>
-              <p class="text-xs font-bold mt-1">3 วัน</p>
+          <div class="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+            <button type="button" onclick="setChallengeDuration(3)" id="cdur-btn-3" class="py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5">
+              <span>🥉</span>
+              <span>3 วัน</span>
             </button>
-            <button onclick="setChallengeDays(7)" id="btn-day-7" class="p-3 border-2 border-sky-600 bg-sky-50 dark:bg-slate-800 rounded-2xl text-center transition">
-              <span class="text-lg">🥈</span>
-              <p class="text-xs font-bold mt-1 text-sky-600">7 วัน</p>
+            <button type="button" onclick="setChallengeDuration(7)" id="cdur-btn-7" class="py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5">
+              <span>🥈</span>
+              <span>7 วัน</span>
             </button>
-            <button onclick="setChallengeDays(30)" id="btn-day-30" class="p-3 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-center hover:border-sky-600 transition">
-              <span class="text-lg">🥇</span>
-              <p class="text-xs font-bold mt-1">30 วัน</p>
+            <button type="button" onclick="setChallengeDuration(14)" id="cdur-btn-14" class="py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5">
+              <span>🥇</span>
+              <span>14 วัน</span>
+            </button>
+            <button type="button" onclick="setChallengeDuration(30)" id="cdur-btn-30" class="py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5">
+              <span>👑</span>
+              <span>30 วัน</span>
             </button>
           </div>
         </div>
 
-        <button onclick="goToScreen(6)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ต่อไป: เลือกรองรับสรีระ</button>
+        <!-- Overall Challenge Progress Card -->
+        <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <i class="ph ph-trophy text-amber-500 text-sm"></i> ความสำเร็จของชาเลนจ์
+            </span>
+            <span id="challenge-progress-count" class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">0/7 วัน (0%)</span>
+          </div>
+          <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+            <div id="challenge-progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p id="challenge-progress-cheer" class="text-[11px] text-slate-500 dark:text-slate-400 text-center">
+            🌱 เริ่มต้นก้าวแรกวันนี้! ทำชาเลนจ์ครบ 3 ข้อเพื่อพิชิตวันแรก
+          </p>
+        </div>
+
+        <!-- Calendar Day Grid (เหมือนปฏิทิน 3, 7, 14 วัน กดเลือกแต่ละวันได้) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <i class="ph ph-calendar text-sky-500"></i> ปฏิทินรายวัน (แตะเพื่อเลือกวัน)
+            </span>
+            <span class="text-[10px] text-slate-400">เขียว = สำเร็จครบ</span>
+          </div>
+          <div id="challenge-calendar-grid" class="grid grid-cols-7 gap-1.5">
+            <!-- Rendered dynamically by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Selected Day's Mission & Checklist -->
+        <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-emerald-500/40 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span id="challenge-active-day-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white font-bold text-xs">วันที่ 1</span>
+              <h3 class="font-bold text-sm text-slate-800 dark:text-white">ภารกิจประจำวัน</h3>
+            </div>
+            <span id="challenge-active-day-status" class="text-[11px] font-bold text-slate-400">0/3 ข้อ</span>
+          </div>
+
+          <!-- All done congratulation banner for active day -->
+          <div id="challenge-day-complete-banner" class="hidden p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center">
+            <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1">
+              <span>🎉</span> <span>ยอดเยี่ยม! คุณทำภารกิจวันนี้ครบทุกข้อแล้ว</span>
+            </p>
+          </div>
+
+          <!-- 3 Daily Habits Checklist -->
+          <div class="space-y-2">
+            <!-- Habit 1: อาหาร -->
+            <button type="button" onclick="toggleChallengeTask(0)" id="task-card-0" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 transition active:scale-[0.99] flex items-center gap-3">
+              <div id="task-check-0" class="w-6 h-6 rounded-lg border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-white shrink-0 transition">
+                <i class="ph ph-check font-bold text-sm opacity-0"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p id="task-title-0" class="font-bold text-xs text-slate-800 dark:text-white">🥗 กินอาหารครบ 3 มื้อ (ไม่ข้ามมื้อ)</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">เน้นโปรตีนและผัก ไม่ปล่อยให้ร่างกายขาดพลังงาน</p>
+              </div>
+            </button>
+
+            <!-- Habit 2: ออกกำลังกาย -->
+            <button type="button" onclick="toggleChallengeTask(1)" id="task-card-1" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 transition active:scale-[0.99] flex items-center gap-3">
+              <div id="task-check-1" class="w-6 h-6 rounded-lg border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-white shrink-0 transition">
+                <i class="ph ph-check font-bold text-sm opacity-0"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p id="task-title-1" class="font-bold text-xs text-slate-800 dark:text-white">🏃‍♀️ ออกกำลังกายอย่างน้อย 10 นาที</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">ขยับร่างกาย เดินเร็ว ยืดเหยียด บอดี้เวท หรือเต้น</p>
+              </div>
+            </button>
+
+            <!-- Habit 3: ดื่มน้ำ -->
+            <button type="button" onclick="toggleChallengeTask(2)" id="task-card-2" class="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 transition active:scale-[0.99] flex items-center gap-3">
+              <div id="task-check-2" class="w-6 h-6 rounded-lg border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-white shrink-0 transition">
+                <i class="ph ph-check font-bold text-sm opacity-0"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p id="task-title-2" class="font-bold text-xs text-slate-800 dark:text-white">💧 ดื่มน้ำให้ครบ 8 แก้ว / วัน</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">จิบน้ำสม่ำเสมอ กระตุ้นการเผาผลาญและช่วยผิวพรรณ</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily Notes Section (โน้ตสำหรับผู้ใช้งาน) -->
+        <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-xs text-slate-800 dark:text-white flex items-center gap-1.5">
+              <i class="ph ph-note-pencil text-sky-500 text-sm"></i>
+              <span>บันทึกโน้ตประจำวัน (<span id="challenge-note-day-label">วันที่ 1</span>)</span>
+            </h3>
+            <span id="challenge-note-saved-status" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">บันทึกอัตโนมัติ ✓</span>
+          </div>
+
+          <textarea id="challenge-day-note-input" rows="3" oninput="onChallengeNoteInput(this.value)" placeholder="เขียนโน้ตของคุณ เช่น มื้อเช้ากินอะไร ออกกำลังกายท่าไหน หรือความรู้สึกวันนี้..." class="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-emerald-500 transition resize-none"></textarea>
+
+          <!-- Quick Tags Shortcuts -->
+          <div class="space-y-1">
+            <span class="text-[10px] text-slate-400">แตะเพื่อเพิ่มข้อความด่วน:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="appendQuickTagToNote('🥗 ทานคลีนครบมื้อ')" class="px-2 py-0.5 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition">+ ทานคลีนครบมื้อ</button>
+              <button type="button" onclick="appendQuickTagToNote('💧 ดื่มน้ำครบ 2 ลิตร')" class="px-2 py-0.5 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition">+ ดื่มน้ำครบ 2 ลิตร</button>
+              <button type="button" onclick="appendQuickTagToNote('🚫 งดของหวาน')" class="px-2 py-0.5 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition">+ งดของหวาน</button>
+              <button type="button" onclick="appendQuickTagToNote('😴 หลับสบาย 8 ชม.')" class="px-2 py-0.5 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition">+ หลับสบาย 8 ชม.</button>
+              <button type="button" onclick="appendQuickTagToNote('✨ ขับถ่ายคล่อง')" class="px-2 py-0.5 text-[10px] rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition">+ ขับถ่ายคล่อง</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-between px-1 pt-1 pb-2">
+          <button type="button" onclick="goToScreen(1)" class="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            ← กลับหน้าแรก
+          </button>
+          <button type="button" onclick="resetChallengeConfirm()" class="text-[11px] text-rose-500 hover:underline">
+            รีเซ็ตชาเลนจ์นี้
+          </button>
+        </div>
       </section>
 
-      <!-- ================= 6. เลือกรองรับสรีระของคุณตาม BMI ================= -->
+      <!-- ================= 6. รูปร่างของคุณตามเกณฑ์ BMI ================= -->
       <section id="screen-6" class="screen p-5 space-y-4 hidden">
         <div class="text-center">
-          <h2 class="text-xl font-bold">เลือกรูปร่างของคุณ</h2>
-          <p class="text-xs text-slate-400">ระบบเลือกให้อัตโนมัติจากค่า BMI ของคุณ (แตะเพื่อเปลี่ยนได้)</p>
+          <h2 class="text-xl font-bold">รูปร่างของคุณตามเกณฑ์ BMI</h2>
+          <p class="text-xs text-slate-400">ระบบประเมินผลให้อัตโนมัติจากค่า BMI ของคุณ</p>
         </div>
 
         <div class="py-4 flex items-end justify-center gap-3">
           <!-- 1. ผอม (Thin) -->
-          <div id="card-shape-thin" onclick="selectShape('thin')" class="w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80">
+          <div id="card-shape-thin" class="w-20 text-center transition-all duration-300 p-2 rounded-2xl scale-90 opacity-30 select-none pointer-events-none">
             <div id="shape-thin" class="h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700">
               🧍‍♀️
             </div>
             <p class="text-xs font-bold mt-2">ผอม</p>
             <p id="shape-thin-size" class="text-[9px] text-slate-400"></p>
             <div id="badge-shape-thin" class="hidden mt-1">
-              <span class="inline-block px-2 py-0.5 bg-blue-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+              <span class="inline-block px-2.5 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-full shadow">✓ รูปร่างของคุณ</span>
             </div>
           </div>
 
           <!-- 2. ปกติ (Normal) -->
-          <div id="card-shape-normal" onclick="selectShape('normal')" class="w-28 text-center cursor-pointer transition-all duration-300 p-2.5 rounded-2xl scale-110 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 shadow-xl">
-            <div id="shape-normal" class="h-44 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-500">
+          <div id="card-shape-normal" class="w-32 text-center transition-all duration-300 p-3 rounded-2xl scale-105 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-500 shadow-xl select-none">
+            <div id="shape-normal" class="h-48 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-400">
               🏃‍♀️
             </div>
             <p class="text-xs font-bold mt-2">ปกติ</p>
             <p id="shape-normal-size" class="text-[9px] text-slate-400"></p>
             <div id="badge-shape-normal" class="mt-1">
-              <span class="inline-block px-2 py-0.5 bg-emerald-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+              <span class="inline-block px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full shadow">✓ รูปร่างของคุณ</span>
             </div>
           </div>
 
           <!-- 3. อ้วน (Fat) -->
-          <div id="card-shape-fat" onclick="selectShape('fat')" class="w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80">
+          <div id="card-shape-fat" class="w-20 text-center transition-all duration-300 p-2 rounded-2xl scale-90 opacity-30 select-none pointer-events-none">
             <div id="shape-fat" class="h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700">
               🧘‍♀️
             </div>
             <p class="text-xs font-bold mt-2">อ้วน</p>
             <p id="shape-fat-size" class="text-[9px] text-slate-400"></p>
             <div id="badge-shape-fat" class="hidden mt-1">
-              <span class="inline-block px-2 py-0.5 bg-rose-600 text-white text-[9px] font-bold rounded-full shadow">ตรงกับคุณ</span>
+              <span class="inline-block px-2.5 py-1 bg-rose-600 text-white text-[10px] font-bold rounded-full shadow">✓ รูปร่างของคุณ</span>
             </div>
           </div>
         </div>
@@ -373,94 +473,137 @@
           </p>
         </div>
 
-        <button onclick="goToScreen(7)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดูการจำลองผลลัพธ์</button>
+        <button onclick="goToScreen(7)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ต่อไป: ตั้งเป้าหมาย &amp; ดูผลลัพธ์จำลอง</button>
       </section>
 
-      <!-- ================= 7. จำลองผลลัพธ์การเปลี่ยนแปลง ================= -->
-      <section id="screen-7" class="screen p-5 space-y-4 hidden">
-        <div class="text-center">
-          <h2 class="text-xl font-bold">จำลองผลลัพธ์การเปลี่ยนแปลง</h2>
-          <p class="text-xs text-slate-400">เห็นผลลัพธ์ก่อนเริ่มจริง</p>
-        </div>
+      <!-- ================= 7. ตั้งเป้าหมาย & จำลองผลลัพธ์การเปลี่ยนแปลง ================= -->
+      <section id="screen-7" class="screen p-5 space-y-6 hidden">
 
-        <div class="flex justify-center gap-2">
-          <button class="px-4 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700">7 วัน</button>
-          <button class="px-4 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700">14 วัน</button>
-          <button class="px-4 py-1.5 rounded-full text-xs font-bold bg-sky-600 text-white">30 วัน</button>
-        </div>
-
-        <div class="flex items-center justify-center gap-6 py-4">
+        <!-- 1. ตั้งเป้าหมายของคุณ -->
+        <div class="space-y-3.5">
           <div class="text-center">
-            <div id="sim-before-img" class="w-20 h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl overflow-hidden">🧍‍♀️</div>
-            <span id="sim-before-label" class="text-xs text-slate-400 mt-1 block">ก่อนเริ่ม</span>
+            <h2 class="text-xl font-bold">ตั้งเป้าหมายของคุณ</h2>
+            <p class="text-xs text-slate-400">เริ่มจากสิ่งที่คุณอยากเป็น</p>
           </div>
-          <i class="ph ph-arrow-right text-sky-600 text-xl font-bold"></i>
-          <div class="text-center">
-            <div id="sim-after-img" class="w-20 h-32 bg-sky-100 dark:bg-sky-950/40 border border-sky-500 rounded-2xl flex items-center justify-center text-3xl overflow-hidden">💃</div>
-            <span id="sim-after-label" class="text-xs text-sky-600 font-bold mt-1 block">หลัง 30 วัน</span>
+
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between items-center text-xs">
+                <label class="font-medium text-slate-500">🎯 น้ำหนักเป้าหมาย (กก.)</label>
+                <span id="goal-diff-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">ลด 8.0 กก.</span>
+              </div>
+              <input type="number" id="target-weight-input" value="52" step="0.5" oninput="calculateGoalAndSimulation()" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <div>
+              <label class="text-xs font-medium text-slate-500">👗 สัดส่วนเป้าหมาย</label>
+              <select id="target-body-focus" onchange="calculateGoalAndSimulation()" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none">
+                <option value="กระชับสัดส่วน / ลีนหน้าท้อง">กระชับสัดส่วน / ลีนหน้าท้อง</option>
+                <option value="ลดสะโพกและต้นขา">ลดสะโพกและต้นขา</option>
+                <option value="สร้างร่อง 11 และกล้ามเนื้อ">สร้างร่อง 11 และกล้ามเนื้อ</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-medium text-slate-500 mb-1.5 block">⏱️ เลือกระยะเวลาเป้าหมาย</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="setSimDuration(7)" id="sim-btn-7" class="py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition">7 วัน</button>
+                <button type="button" onclick="setSimDuration(14)" id="sim-btn-14" class="py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition">14 วัน</button>
+                <button type="button" onclick="setSimDuration(30)" id="sim-btn-30" class="py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-sky-600 bg-sky-50 dark:bg-slate-800 text-sky-600 transition">30 วัน</button>
+                <button type="button" onclick="setSimDuration(60)" id="sim-btn-60" class="py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition">60 วัน</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Simulated Trend Graph Chart Placeholder -->
-        <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <div class="flex justify-between items-center text-xs mb-2">
-            <span class="font-bold">📉 การลดน้ำหนัก & ไขมัน</span>
-            <span class="text-[10px] text-sky-600">● น้ำหนัก (กก.)  ○ ไขมัน (%)</span>
-          </div>
-          <div class="h-20 flex items-end justify-between px-2 pt-2 border-b border-l border-slate-300 dark:border-slate-600 text-[10px] text-slate-400">
-            <span>60kg</span>
-            <span>58kg</span>
-            <span>56kg</span>
-            <span>54kg</span>
-            <span class="font-bold text-sky-600">52kg</span>
-          </div>
-          <div class="flex justify-between text-[9px] text-slate-400 mt-1 px-1">
-            <span>วันที่ 1</span>
-            <span>วันที่ 7</span>
-            <span>วันที่ 14</span>
-            <span>วันที่ 21</span>
-            <span>วันที่ 30</span>
-          </div>
-        </div>
+        <hr class="border-slate-200 dark:border-slate-700">
 
-        <button onclick="goToScreen(8)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ตั้งเป้าหมายของคุณ</button>
-      </section>
-
-      <!-- ================= 8. ตั้งเป้าหมายของคุณ ================= -->
-      <section id="screen-8" class="screen p-5 space-y-5 hidden">
-        <div class="text-center">
-          <h2 class="text-xl font-bold">ตั้งเป้าหมายของคุณ</h2>
-          <p class="text-xs text-slate-400">เริ่มจากสิ่งที่คุณอยากเป็น</p>
-        </div>
-
+        <!-- 3. ส่วนล่าง: จำลองและคำนวณผลลัพธ์การเปลี่ยนแปลง -->
         <div class="space-y-4">
-          <div>
-            <label class="text-xs font-medium text-slate-500">🎯 น้ำหนักเป้าหมาย (กก.)</label>
-            <input type="number" id="target-weight-input" value="52" class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold outline-none">
+          <div class="text-center">
+            <h2 class="text-xl font-bold">จำลองผลลัพธ์การเปลี่ยนแปลง</h2>
+            <p class="text-xs text-slate-400">เห็นผลลัพธ์ก่อนเริ่มจริง (คำนวณจากเป้าหมายของคุณ)</p>
           </div>
 
-          <div>
-            <label class="text-xs font-medium text-slate-500">👗 สัดส่วนเป้าหมาย</label>
-            <select class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
-              <option>กระชับสัดส่วน / ลีนหน้าท้อง</option>
-              <option>ลดสะโพกและต้นขา</option>
-              <option>สร้างร่อง 11 และกล้ามเนื้อ</option>
-            </select>
+          <!-- Dynamic Comparison Cards -->
+          <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] text-slate-400 block">ปัจจุบัน</span>
+              <p class="text-base font-extrabold text-slate-800 dark:text-white mt-0.5"><span id="sim-current-weight">60</span> กก.</p>
+              <span id="sim-current-bmi" class="text-[10px] font-bold text-slate-500">BMI 22.0</span>
+            </div>
+            <div class="p-3 bg-sky-50/80 dark:bg-sky-950/30 rounded-2xl border border-sky-200 dark:border-sky-800">
+              <span class="text-[10px] text-sky-600 dark:text-sky-400 block font-bold">เป้าหมาย</span>
+              <p class="text-base font-extrabold text-sky-600 dark:text-sky-400 mt-0.5"><span id="sim-target-weight">52</span> กก.</p>
+              <span id="sim-target-bmi" class="text-[10px] font-bold text-emerald-600">BMI 19.1</span>
+            </div>
           </div>
 
-          <div>
-            <label class="text-xs font-medium text-slate-500">⏱️ ระยะเวลา</label>
-            <select class="w-full mt-1.5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none">
-              <option>30 วัน</option>
-              <option>60 วัน</option>
-              <option>90 วัน</option>
-            </select>
+          <!-- Before / After Visual Simulation (Real Images from Backend) -->
+          <div class="flex items-center justify-center gap-6 py-2">
+            <div class="text-center">
+              <div id="sim-before-img" class="w-20 h-32 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400" class="w-full h-full object-cover rounded-2xl" alt="ก่อนเริ่ม">
+              </div>
+              <span id="sim-before-label" class="text-xs text-slate-400 mt-1 block">ก่อนเริ่ม</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <span id="sim-arrow-change" class="text-[10px] font-bold text-emerald-600 mb-1">-8 กก.</span>
+              <i class="ph ph-arrow-right text-sky-600 text-xl font-bold"></i>
+              <span id="sim-duration-badge" class="text-[9px] text-slate-400 mt-1">ใน 30 วัน</span>
+            </div>
+            <div class="text-center">
+              <div id="sim-after-img" class="w-20 h-32 bg-sky-50 dark:bg-sky-950/40 border-2 border-sky-500 rounded-2xl flex items-center justify-center overflow-hidden shadow-md">
+                <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400" class="w-full h-full object-cover rounded-2xl" alt="เป้าหมาย">
+              </div>
+              <span id="sim-after-label" class="text-xs text-sky-600 font-bold mt-1 block">เป้าหมาย (52 กก.)</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Simulated Trend Graph Chart -->
+          <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold flex items-center gap-1"><i class="ph ph-trend-down text-sky-500"></i> แนวโน้มการเปลี่ยนแปลง</span>
+              <span id="sim-change-rate" class="text-[10px] text-sky-600 font-bold">อัตราลดประมาณ 0.5 - 0.7 กก./สัปดาห์</span>
+            </div>
+            <!-- Dynamic 5-point weight milestones -->
+            <div class="h-20 flex items-end justify-between px-2 pt-2 border-b border-l border-slate-300 dark:border-slate-600 text-[10px] text-slate-400">
+              <span id="graph-p1">60kg</span>
+              <span id="graph-p2">58kg</span>
+              <span id="graph-p3">56kg</span>
+              <span id="graph-p4">54kg</span>
+              <span id="graph-p5" class="font-bold text-sky-600">52kg</span>
+            </div>
+            <div class="flex justify-between text-[9px] text-slate-400 px-1">
+              <span id="graph-d1">เริ่ม</span>
+              <span id="graph-d2">สัปดาห์ 1</span>
+              <span id="graph-d3">สัปดาห์ 2</span>
+              <span id="graph-d4">สัปดาห์ 3</span>
+              <span id="graph-d5">ครบกำหนด</span>
+            </div>
+          </div>
+
+          <!-- Health Coaching Summary Note -->
+          <div id="sim-analysis-box" class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+            <i class="ph ph-check-circle text-emerald-600 font-bold text-base mt-0.5 shrink-0"></i>
+            <div>
+              <p class="font-bold">เป้าหมายเหมาะสมและปลอดภัย!</p>
+              <p id="sim-analysis-text" class="text-[11px] text-emerald-700/90 dark:text-emerald-400 mt-0.5">การตั้งเป้าหมายในระยะเวลาที่เลือก ร่วมกับ Mini Challenge 3 ข้อ สามารถทำได้จริงอย่างยั่งยืน</p>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="space-y-2 pt-1">
+            <button type="button" onclick="saveGoalAndProceed()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-sky-500/25 transition active:scale-[0.99] flex items-center justify-center gap-2">
+              บันทึกและแชร์เป้าหมายของฉัน <i class="ph ph-arrow-right font-bold"></i>
+            </button>
           </div>
         </div>
 
-        <button onclick="saveGoalAndGo()" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">บันทึกเป้าหมาย</button>
-        <p class="text-center text-xs text-slate-400">"เป้าหมายที่ดี คือจุดเริ่มต้นของความสำเร็จ"</p>
       </section>
+
+      <!-- Screen 8 placeholder (merged into screen-7) -->
+      <section id="screen-8" class="screen hidden"></section>
 
       <!-- ================= 9. แชร์เป้าหมายของฉัน ================= -->
       <section id="screen-9" class="screen p-5 space-y-4 hidden text-center">
@@ -468,22 +611,23 @@
         <p class="text-xs text-slate-400">ให้กำลังใจตัวเอง และคนรอบข้าง</p>
 
         <!-- Shareable Virtual Card -->
-        <div class="p-6 rounded-3xl bg-gradient-to-b from-sky-50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-sky-100 dark:border-slate-700 shadow-sm text-center relative">
-          <div class="w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-md">
-            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300" class="w-full h-full object-cover" alt="User">
+        <div id="shareable-goal-card" class="p-6 rounded-3xl bg-gradient-to-b from-sky-50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-sky-100 dark:border-slate-700 shadow-sm text-center relative">
+          <!-- Dynamic Target Image pulled directly from Simulation Screen (รูปเต็ม ไม่ตัดวงกลม) -->
+          <div class="w-52 h-72 mx-auto rounded-2xl overflow-hidden border-2 border-sky-400 dark:border-sky-500 shadow-md bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+            <img id="share-target-img" crossorigin="anonymous" src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400" class="w-full h-full object-cover rounded-2xl" alt="เป้าหมายของคุณ" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400';">
           </div>
           <h3 class="font-extrabold text-lg mt-3">เป้าหมายของฉัน</h3>
-          <p class="text-sky-600 font-bold text-xl">ลดน้ำหนัก 8 กก. ภายใน 30 วัน</p>
+          <p id="share-goal-title" class="text-sky-600 font-bold text-xl">ลดน้ำหนัก 8 กก. ภายใน 30 วัน</p>
 
           <div class="flex justify-center gap-6 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-xs">
             <div>
               <span class="text-slate-400 block text-[10px]">น้ำหนักปัจจุบัน</span>
-              <b class="text-base">60 กก.</b>
+              <b id="share-current-weight" class="text-base">60 กก.</b>
             </div>
             <div class="border-r border-slate-200 dark:border-slate-700"></div>
             <div>
               <span class="text-slate-400 block text-[10px]">เป้าหมาย</span>
-              <b class="text-base text-sky-600">52 กก.</b>
+              <b id="share-target-weight" class="text-base text-sky-600">52 กก.</b>
             </div>
           </div>
           <div class="mt-4 flex items-center justify-between text-[10px] text-slate-400">
@@ -493,8 +637,22 @@
         </div>
 
         <div class="space-y-2">
-          <button onclick="goToScreen(10)" class="w-full py-3.5 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow">ดาวน์โหลดรูปภาพ</button>
-          <button onclick="goToScreen(10)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold">แชร์ไปยังโซเชียล</button>
+          <!-- ปุ่มพาไปหน้า Mini Challenge -->
+          <button type="button" onclick="goToScreen(5)" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl font-bold text-sm shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 transition active:scale-[0.99]">
+            <i class="ph ph-calendar-check text-lg"></i>
+            <span>เริ่มทำ Mini Challenge ของคุณ</span>
+            <i class="ph ph-arrow-right font-bold"></i>
+          </button>
+          <!-- ปุ่มดาวน์โหลดรูปภาพได้จริง -->
+          <button type="button" id="download-share-btn" onclick="downloadGoalCardImage()" class="w-full py-3 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white rounded-2xl font-bold text-xs shadow flex items-center justify-center gap-2 transition">
+            <i class="ph ph-download-simple text-sm font-bold"></i>
+            <span>ดาวน์โหลดรูปภาพ</span>
+          </button>
+          <!-- ปุ่มแชร์ไปยังโซเชียลได้จริง -->
+          <button type="button" id="social-share-btn" onclick="shareGoalCardImage()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 active:scale-[0.99] rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition">
+            <i class="ph ph-share-network text-sm font-bold"></i>
+            <span>แชร์ไปยังโซเชียล</span>
+          </button>
         </div>
       </section>
 
@@ -749,6 +907,11 @@
           <button onclick="goToScreen(17)" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-xs">
             ดูโปรแกรมโดยรวม &gt;
           </button>
+          <div id="coach-dev-admin-container" class="hidden pt-2 border-t border-slate-100 dark:border-slate-800">
+            <a href="coach-login.html" class="w-full py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-amber-300 dark:text-amber-400 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow border border-amber-500/30">
+              <i class="ph ph-shield-check text-base"></i> จัดการระบบหลังบ้าน (Developer Admin)
+            </a>
+          </div>
         </div>
       </section>
 
@@ -822,12 +985,12 @@
           <span class="text-[9px] font-semibold">หน้าแรก</span>
         </button>
 
-        <!-- เมนู 2: ภารกิจ -->
-        <button onclick="goToScreen(5)" id="bnav-2" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+        <!-- เมนู 2: รูปร่าง -->
+        <button onclick="goToScreen(6)" id="bnav-2" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
           <div class="w-6 h-6 flex items-center justify-center">
             <i class="ph ph-check-circle text-xl"></i>
           </div>
-          <span class="text-[9px] font-semibold">ภารกิจ</span>
+          <span class="text-[9px] font-semibold">รูปร่าง</span>
         </button>
 
         <!-- เมนู 3: ผลลัพธ์ -->
@@ -838,12 +1001,12 @@
           <span class="text-[9px] font-semibold">ผลลัพธ์</span>
         </button>
 
-        <!-- เมนู 4: โค้ช -->
-        <button onclick="goToScreen(15)" id="bnav-4" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+        <!-- เมนู 4: Mini ชาเลนจ์ -->
+        <button onclick="goToScreen(5)" id="bnav-4" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
           <div class="w-6 h-6 flex items-center justify-center">
-            <i class="ph ph-chat-teardrop-dots text-xl"></i>
+            <i class="ph ph-calendar-check text-xl"></i>
           </div>
-          <span class="text-[9px] font-semibold">โค้ช</span>
+          <span class="text-[9px] font-semibold">Mini ชาเลนจ์</span>
         </button>
 
         <!-- เมนู 5: Circular User Profile -->
@@ -857,6 +1020,45 @@
       </div>
     </nav>
 
+  </div>
+
+  <!-- Modal สำหรับดูตัวอย่างรูปภาพเป้าหมาย & บันทึกลงเครื่อง / แชร์ -->
+  <div id="share-image-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl p-5 space-y-4 max-h-[92vh] overflow-y-auto text-center shadow-2xl border border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+        <h3 class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+          <i class="ph ph-image text-sky-500 font-bold"></i>
+          <span>รูปภาพเป้าหมายของคุณ</span>
+        </h3>
+        <button onclick="closeShareImageModal()" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center">
+          <i class="ph ph-x font-bold"></i>
+        </button>
+      </div>
+
+      <!-- Preview Image -->
+      <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md bg-slate-100 dark:bg-slate-900">
+        <img id="share-modal-img" src="" class="w-full h-auto object-contain max-h-[50vh] mx-auto select-none" alt="Goal Card">
+      </div>
+
+      <!-- Mobile Tip Badge -->
+      <div class="p-2.5 bg-sky-50 dark:bg-sky-950/40 rounded-xl text-left border border-sky-200 dark:border-sky-800 text-[11px] text-sky-800 dark:text-sky-300 flex items-start gap-2">
+        <i class="ph ph-lightbulb text-sky-600 font-bold text-sm mt-0.5 shrink-0"></i>
+        <div>
+          <p class="font-bold">วิธีบันทึกบนมือถือ:</p>
+          <p class="text-[10px] text-sky-700 dark:text-sky-400 mt-0.5">แตะค้างที่รูปภาพด้านบน แล้วเลือก <b>"บันทึกรูปภาพ" (Save Image)</b> เพื่อเซฟลงอัลบั้มรูปในเครื่องได้ทันที</p>
+        </div>
+      </div>
+
+      <!-- Actions inside modal -->
+      <div class="space-y-2">
+        <button id="modal-download-btn" onclick="triggerDirectDownload()" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-2xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition">
+          <i class="ph ph-download-simple font-bold"></i> ดาวน์โหลดไฟล์รูปลงเครื่อง
+        </button>
+        <button id="modal-share-btn" onclick="triggerWebShareDirect()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition">
+          <i class="ph ph-share-network font-bold"></i> ส่งต่อ / แชร์ไปยังโซเชียล
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Modal for Logo & Background Upload -->
@@ -920,12 +1122,62 @@
     </div>
   </div>
 
+  <!-- Modal 1: หน้าต่างแจ้งเตือนกำลังคำนวณ (3 วินาที) -->
+  <div id="calculating-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-sky-100 dark:border-slate-700">
+      <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-4 border-sky-200 dark:border-sky-950 border-t-sky-500 animate-spin"></div>
+        <div class="w-12 h-12 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-400 text-2xl animate-pulse">
+          <i class="ph ph-heartbeat font-bold"></i>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white">กำลังคำนวณผลสุขภาพ...</h3>
+        <p class="text-xs text-slate-400 mt-1">ระบบกำลังวิเคราะห์ค่า BMI และข้อมูลสัดส่วนเฉพาะบุคคล</p>
+      </div>
+      <!-- Progress Bar (3-second fill) -->
+      <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+        <div id="calc-progress-bar" class="h-full bg-gradient-to-r from-sky-500 to-blue-600 w-0 rounded-full"></div>
+      </div>
+      <p class="text-[11px] text-slate-400 font-medium">กรุณารอสักครู่ (ประมาณ 3 วินาที)</p>
+    </div>
+  </div>
+
+  <!-- Modal 2: หน้าต่างกรอกรหัสโค้ชผู้ดูแล (Coach ID) -->
+  <div id="coach-code-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-5 shadow-2xl border border-sky-100 dark:border-slate-700">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white mx-auto flex items-center justify-center text-3xl shadow-lg shadow-sky-500/25">
+        <i class="ph ph-identification-card font-bold"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white">ระบุรหัสโค้ชผู้ดูแล (Coach ID)</h3>
+        <p class="text-xs text-slate-400 mt-1">กรอกไอดีของโค้ชที่แนะนำคุณ เพื่อรับคำปรึกษาและโปรแกรมเฉพาะบุคคล</p>
+      </div>
+      <div class="space-y-1.5">
+        <input type="text" id="modal-coach-code-input" onkeyup="if(event.key==='Enter') submitModalCoachCode()" placeholder="เช่น SKM321 หรือ SKM123" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-700/60 border-2 border-dashed border-sky-400 text-center font-bold tracking-widest text-lg uppercase outline-none focus:ring-2 focus:ring-sky-500">
+        <p class="text-[10px] text-slate-400">ใส่รหัสโค้ช 6 หลัก</p>
+      </div>
+      <div class="space-y-2">
+        <button onclick="submitModalCoachCode()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-sky-500/25 transition active:scale-[0.99] text-sm">
+          ยืนยันรหัสโค้ช
+        </button>
+        <button onclick="skipModalCoachCode()" class="w-full py-2.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition font-medium">
+          ยังไม่มีรหัสโค้ช / ข้ามขั้นตอนนี้ &gt;
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Interactive Logic Engine -->
   <script>
     let currentScreen = 1;
     const historyStack = [];
 
     function goToScreen(screenNumber) {
+      if (screenNumber === 3 || screenNumber === 4 || screenNumber === 8) {
+        goToScreen(7);
+        return;
+      }
       if (currentScreen !== screenNumber) {
         historyStack.push(currentScreen);
       }
@@ -937,7 +1189,6 @@
       if (target) {
         target.classList.remove('hidden');
       }
-
 
       const backBtn = document.getElementById('header-back-btn');
       if (screenNumber === 1) {
@@ -951,11 +1202,15 @@
 
       // Refresh dynamic data for the screen
       loadCoachInfo();
-      if (screenNumber === 6) {
+      if (screenNumber === 5) {
+        initMiniChallengeUI();
+      } else if (screenNumber === 6) {
         syncBodyShapeWithBMI();
         loadBodyShapes();
       } else if (screenNumber === 7) {
-        updateScreen7Simulation(selectedBodyShape || 'normal');
+        calculateGoalAndSimulation();
+      } else if (screenNumber === 9) {
+        syncShareTargetImage();
       }
 
       // Track page view
@@ -982,13 +1237,13 @@
 
       if ([1, 2, 3, 4].includes(screenNumber)) {
         setActiveNav('bnav-1');
-      } else if ([5, 6, 8, 9].includes(screenNumber)) {
+      } else if ([6].includes(screenNumber)) {
         setActiveNav('bnav-2');
-      } else if ([7, 10, 11, 13, 14, 17].includes(screenNumber)) {
+      } else if ([7, 8, 9, 10, 11, 13, 14, 17].includes(screenNumber)) {
         setActiveNav('bnav-3');
-      } else if ([12, 15].includes(screenNumber)) {
+      } else if ([5].includes(screenNumber)) {
         setActiveNav('bnav-4');
-      } else if ([16].includes(screenNumber)) {
+      } else if ([12, 15, 16].includes(screenNumber)) {
         setActiveNav('bnav-5');
       }
     }
@@ -1001,43 +1256,832 @@
       }
     }
 
-    function calcBMIAction() {
-      const w = parseFloat(document.getElementById('input-weight').value);
-      const h = parseFloat(document.getElementById('input-height').value);
+    // Pure UI calculation update without popping up any modals
+    function updateBMIDisplay(w, h) {
+      if (!w || !h) return;
+      localStorage.setItem('user_weight', w);
+      localStorage.setItem('user_height', h);
+      const result = backend.calculateBMI(w, h);
+      localStorage.setItem('user_bmi', result.bmi);
+
+      const bmiNum = document.getElementById('display-bmi-num');
+      const badge = document.getElementById('display-bmi-badge');
+      const text = document.getElementById('display-bmi-text');
+      if (bmiNum) bmiNum.innerText = result.bmi;
+      if (badge) {
+        badge.innerText = result.category;
+        badge.className = `px-3 py-1 rounded-full text-xs font-bold bg-${result.color}-100 text-${result.color}-700`;
+      }
+      if (text) {
+        text.innerText = result.message;
+        text.className = `text-xs text-${result.color}-600 font-medium`;
+      }
+
+      syncBodyShapeWithBMI();
+    }
+
+    // Triggered ONLY after the user clicks the "คำนวณ BMI" button
+    function onUserClickCalculateBMI() {
+      const weightInput = document.getElementById('input-weight');
+      const heightInput = document.getElementById('input-height');
+      const w = weightInput ? parseFloat(weightInput.value) : 0;
+      const h = heightInput ? parseFloat(heightInput.value) : 0;
 
       if (!w || !h) {
         backend.showToast('กรุณากรอกน้ำหนักและส่วนสูงให้ครบถ้วน', 'error');
         return;
       }
 
-      const result = backend.calculateBMI(w, h);
+      // Update BMI on screen
+      updateBMIDisplay(w, h);
 
-      document.getElementById('display-bmi-num').innerText = result.bmi;
+      // Show "กำลังคำนวณ" Modal for 3 seconds
+      const calcModal = document.getElementById('calculating-modal');
+      const progressBar = document.getElementById('calc-progress-bar');
+      if (calcModal) {
+        calcModal.classList.remove('hidden');
+        if (progressBar) {
+          progressBar.style.transition = 'none';
+          progressBar.style.width = '0%';
+          setTimeout(() => {
+            progressBar.style.transition = 'width 3s linear';
+            progressBar.style.width = '100%';
+          }, 50);
+        }
+      }
 
-      const badge = document.getElementById('display-bmi-badge');
-      badge.innerText = result.category;
-      badge.className = `px-3 py-1 rounded-full text-xs font-bold bg-${result.color}-100 text-${result.color}-700`;
+      // After 3 seconds, hide calculating modal
+      setTimeout(() => {
+        if (calcModal) calcModal.classList.add('hidden');
 
-      const text = document.getElementById('display-bmi-text');
-      text.innerText = result.message;
-      text.className = `text-xs text-${result.color}-600 font-medium`;
+        // Check if user already entered via coach referral link or already has a coach assigned
+        const hasCoach = (typeof backend !== 'undefined' && backend.hasAssignedCoach)
+          ? backend.hasAssignedCoach()
+          : Boolean(backend.getCoachCode());
 
-      // Sync with body shape screen immediately
-      hasUserManuallySelectedShape = false;
-      syncBodyShapeWithBMI();
+        if (hasCoach) {
+          // User already entered via coach link -> skip coach ID prompt and proceed directly to Screen 6 (BMI Body Shape)
+          loadCoachInfo();
+          goToScreen(6);
+        } else {
+          // Organic visitor without coach ID -> pop up Coach ID modal
+          openCoachCodeModal();
+        }
+      }, 3000);
     }
 
-    function setChallengeDays(days) {
-      [3, 7, 30].forEach(d => {
-        const btn = document.getElementById(`btn-day-${d}`);
-        btn.classList.remove('border-sky-600', 'bg-sky-50', 'dark:bg-slate-800');
-      });
-      const active = document.getElementById(`btn-day-${days}`);
-      active.classList.add('border-sky-600', 'bg-sky-50', 'dark:bg-slate-800');
+    function calcBMIAction() {
+      onUserClickCalculateBMI();
+    }
 
-      // Save to backend
-      const tasks = ['กินอาหารครบ 3 มื้อ', 'ออกกำลังกายอย่างน้อย 10 นาที', 'ดื่มน้ำให้ครบ 8 แก้ว'];
-      backend.saveChallenge(days, tasks);
+    // Coach Code Modal Handlers
+    function openCoachCodeModal() {
+      const coachModal = document.getElementById('coach-code-modal');
+      const input = document.getElementById('modal-coach-code-input');
+      if (coachModal) {
+        coachModal.classList.remove('hidden');
+        const existingCode = backend.getCoachCode() || '';
+        if (input && existingCode) {
+          input.value = existingCode;
+        }
+        if (input) {
+          setTimeout(() => input.focus(), 100);
+        }
+      }
+    }
+
+    function submitModalCoachCode() {
+      const input = document.getElementById('modal-coach-code-input');
+      const code = input ? input.value.trim() : '';
+
+      if (!code) {
+        backend.showToast('กรุณากรอกรหัสโค้ช หรือกดข้ามขั้นตอนนี้', 'error');
+        return;
+      }
+
+      if (backend.verifyCoachCode(code)) {
+        loadCoachInfo();
+        closeCoachCodeModal();
+        goToScreen(6);
+      }
+    }
+
+    function skipModalCoachCode() {
+      closeCoachCodeModal();
+      goToScreen(6);
+    }
+
+    function closeCoachCodeModal() {
+      const coachModal = document.getElementById('coach-code-modal');
+      if (coachModal) coachModal.classList.add('hidden');
+    }
+
+    function saveInputsAndSync() {
+      const w = parseFloat(document.getElementById('input-weight')?.value);
+      const h = parseFloat(document.getElementById('input-height')?.value);
+      if (w > 0) localStorage.setItem('user_weight', w);
+      if (h > 0) localStorage.setItem('user_height', h);
+      if (w > 0 && h > 0) {
+        const heightM = h / 100;
+        const bmi = parseFloat((w / (heightM * heightM)).toFixed(1));
+        localStorage.setItem('user_bmi', bmi);
+      }
+    }
+
+    // ==========================================
+    // MINI CHALLENGE CALENDAR & TRACKER LOGIC
+    // ==========================================
+    const MINI_CHALLENGE_KEY = 'skm_mini_challenge';
+
+    function getMiniChallengeState() {
+      const defaultState = {
+        duration: 7,
+        selectedDay: 1,
+        days: {}
+      };
+      try {
+        const raw = localStorage.getItem(MINI_CHALLENGE_KEY);
+        if (!raw) return defaultState;
+        const parsed = JSON.parse(raw);
+        return {
+          duration: parsed.duration || 7,
+          selectedDay: parsed.selectedDay || 1,
+          days: parsed.days || {}
+        };
+      } catch (e) {
+        return defaultState;
+      }
+    }
+
+    function saveMiniChallengeState(state) {
+      try {
+        localStorage.setItem(MINI_CHALLENGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Failed to save mini challenge state', e);
+      }
+    }
+
+    function initMiniChallengeUI() {
+      const state = getMiniChallengeState();
+      renderMiniChallenge(state);
+    }
+
+    function setChallengeDuration(duration) {
+      const state = getMiniChallengeState();
+      state.duration = duration;
+      if (state.selectedDay > duration) {
+        state.selectedDay = 1;
+      }
+      saveMiniChallengeState(state);
+      renderMiniChallenge(state);
+      if (typeof backend !== 'undefined' && backend.showToast) {
+        backend.showToast(`เลือกระยะเวลา ${duration} วันเรียบร้อย!`, 'success');
+      }
+    }
+
+    // Alias for compatibility
+    function setChallengeDays(days) {
+      setChallengeDuration(days);
+    }
+
+    function selectChallengeDay(dayNum) {
+      const state = getMiniChallengeState();
+      state.selectedDay = dayNum;
+      saveMiniChallengeState(state);
+      renderMiniChallenge(state);
+    }
+
+    function toggleChallengeTask(taskIndex) {
+      const state = getMiniChallengeState();
+      const day = state.selectedDay;
+      if (!state.days[day]) {
+        state.days[day] = { tasks: [false, false, false], note: '' };
+      }
+      if (!Array.isArray(state.days[day].tasks)) {
+        state.days[day].tasks = [false, false, false];
+      }
+      state.days[day].tasks[taskIndex] = !state.days[day].tasks[taskIndex];
+      saveMiniChallengeState(state);
+      renderMiniChallenge(state);
+
+      // Check if all tasks completed for this day
+      const allDone = state.days[day].tasks.every(Boolean);
+      if (allDone && typeof backend !== 'undefined' && backend.showToast) {
+        backend.showToast(`🎉 ยอดเยี่ยม! ภารกิจวันที่ ${day} สำเร็จครบแล้ว`, 'success');
+      }
+    }
+
+    function onChallengeNoteInput(val) {
+      const state = getMiniChallengeState();
+      const day = state.selectedDay;
+      if (!state.days[day]) {
+        state.days[day] = { tasks: [false, false, false], note: '' };
+      }
+      state.days[day].note = val;
+      saveMiniChallengeState(state);
+
+      const statusEl = document.getElementById('challenge-note-saved-status');
+      if (statusEl) {
+        statusEl.textContent = 'บันทึกแล้ว ✓';
+        statusEl.className = 'text-[10px] text-emerald-600 dark:text-emerald-400 font-medium';
+      }
+
+      const noteBadge = document.getElementById(`cal-note-badge-${day}`);
+      if (noteBadge) {
+        if (val.trim()) {
+          noteBadge.classList.remove('hidden');
+        } else {
+          noteBadge.classList.add('hidden');
+        }
+      }
+    }
+
+    function appendQuickTagToNote(tag) {
+      const input = document.getElementById('challenge-day-note-input');
+      if (!input) return;
+      const current = input.value.trim();
+      const updated = current ? `${current} | ${tag}` : tag;
+      input.value = updated;
+      onChallengeNoteInput(updated);
+    }
+
+    function resetChallengeConfirm() {
+      if (confirm('คุณต้องการรีเซ็ตข้อมูล Mini Challenge ทั้งหมดเพื่อเริ่มต้นใหม่ใช่หรือไม่?')) {
+        const state = {
+          duration: 7,
+          selectedDay: 1,
+          days: {}
+        };
+        saveMiniChallengeState(state);
+        renderMiniChallenge(state);
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('รีเซ็ตข้อมูลชาเลนจ์เรียบร้อยแล้ว', 'info');
+        }
+      }
+    }
+
+    function renderMiniChallenge(currentState) {
+      const state = currentState || getMiniChallengeState();
+      const duration = state.duration || 7;
+      const selectedDay = Math.min(Math.max(state.selectedDay || 1, 1), duration);
+
+      // 1. Duration Tabs
+      [3, 7, 14, 30].forEach(d => {
+        const btn = document.getElementById(`cdur-btn-${d}`);
+        if (btn) {
+          if (d === duration) {
+            btn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-500/30';
+          } else {
+            btn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white';
+          }
+        }
+      });
+      const durLabel = document.getElementById('challenge-duration-label');
+      if (durLabel) durLabel.textContent = `${duration} วัน`;
+
+      // 2. Count completed days
+      let completedDays = 0;
+      for (let d = 1; d <= duration; d++) {
+        const dayData = state.days[d];
+        if (dayData && Array.isArray(dayData.tasks) && dayData.tasks[0] && dayData.tasks[1] && dayData.tasks[2]) {
+          completedDays++;
+        }
+      }
+      const pct = Math.round((completedDays / duration) * 100);
+
+      // Progress bar and counts
+      const progCount = document.getElementById('challenge-progress-count');
+      const progBar = document.getElementById('challenge-progress-bar');
+      const cheerEl = document.getElementById('challenge-progress-cheer');
+      if (progCount) progCount.textContent = `${completedDays}/${duration} วัน (${pct}%)`;
+      if (progBar) progBar.style.width = `${pct}%`;
+
+      if (cheerEl) {
+        if (completedDays === duration) {
+          cheerEl.innerHTML = '<b class="text-emerald-600 dark:text-emerald-400">🏆 สุดยอดมาก! คุณทำสำเร็จครบทุกวันตามเป้าหมาย 100%</b>';
+        } else if (completedDays > 0) {
+          cheerEl.innerHTML = `🔥 ทำสำเร็จแล้ว ${completedDays} วัน! สู้ต่อไปเพื่อความสำเร็จที่ยั่งยืน`;
+        } else {
+          cheerEl.innerHTML = '🌱 เริ่มต้นก้าวแรกวันนี้! ทำชาเลนจ์ครบ 3 ข้อเพื่อพิชิตวันแรก';
+        }
+      }
+
+      // 3. Calendar Day Grid
+      const grid = document.getElementById('challenge-calendar-grid');
+      if (grid) {
+        let gridHtml = '';
+        for (let d = 1; d <= duration; d++) {
+          const dayData = state.days[d] || { tasks: [false, false, false], note: '' };
+          const tasks = dayData.tasks || [false, false, false];
+          const taskCount = tasks.filter(Boolean).length;
+          const isComplete = taskCount === 3;
+          const isSelected = d === selectedDay;
+          const hasNote = Boolean(dayData.note && dayData.note.trim());
+
+          let bgClass = 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300';
+          let badgeText = `${taskCount}/3`;
+          let badgeClass = 'text-slate-400';
+
+          if (isComplete) {
+            bgClass = isSelected
+              ? 'bg-emerald-100 dark:bg-emerald-950/70 border-emerald-500 text-emerald-800 dark:text-emerald-200'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300';
+            badgeText = '✓ ครบ';
+            badgeClass = 'text-emerald-600 dark:text-emerald-400 font-bold';
+          } else if (isSelected) {
+            bgClass = 'bg-sky-50 dark:bg-slate-700 border-sky-500 text-sky-700 dark:text-sky-300 ring-2 ring-sky-400/30';
+          }
+
+          gridHtml += `
+            <button type="button" onclick="selectChallengeDay(${d})" class="relative p-2 rounded-xl border flex flex-col items-center justify-center transition active:scale-95 ${bgClass} ${isSelected ? 'border-2 shadow-sm font-bold' : ''}">
+              <span class="text-[10px] leading-tight">วัน</span>
+              <span class="text-sm font-black leading-tight">${d}</span>
+              <span class="text-[8px] mt-0.5 ${badgeClass}">${badgeText}</span>
+              <span id="cal-note-badge-${d}" class="absolute top-1 right-1 text-[8px] ${hasNote ? '' : 'hidden'}">📝</span>
+            </button>
+          `;
+        }
+        grid.innerHTML = gridHtml;
+      }
+
+      // 4. Selected Day Checklist & Detail
+      const activeDayData = state.days[selectedDay] || { tasks: [false, false, false], note: '' };
+      const activeTasks = activeDayData.tasks || [false, false, false];
+      const activeTaskCount = activeTasks.filter(Boolean).length;
+      const isDayComplete = activeTaskCount === 3;
+
+      const dayBadge = document.getElementById('challenge-active-day-badge');
+      const dayStatus = document.getElementById('challenge-active-day-status');
+      const completeBanner = document.getElementById('challenge-day-complete-banner');
+
+      if (dayBadge) dayBadge.textContent = `วันที่ ${selectedDay}`;
+      if (dayStatus) {
+        dayStatus.textContent = `${activeTaskCount}/3 ข้อสำเร็จ`;
+        dayStatus.className = isDayComplete
+          ? 'text-[11px] font-bold text-emerald-600 dark:text-emerald-400'
+          : 'text-[11px] font-bold text-slate-400';
+      }
+
+      if (completeBanner) {
+        if (isDayComplete) {
+          completeBanner.classList.remove('hidden');
+        } else {
+          completeBanner.classList.add('hidden');
+        }
+      }
+
+      // 3 Daily Habits Checklist Cards
+      for (let i = 0; i < 3; i++) {
+        const isChecked = Boolean(activeTasks[i]);
+        const card = document.getElementById(`task-card-${i}`);
+        const box = document.getElementById(`task-check-${i}`);
+        const icon = box ? box.querySelector('i') : null;
+        const title = document.getElementById(`task-title-${i}`);
+
+        if (card && box) {
+          if (isChecked) {
+            card.className = 'w-full text-left p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 transition active:scale-[0.99] flex items-center gap-3';
+            box.className = 'w-6 h-6 rounded-lg border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center text-white shrink-0 transition shadow-sm';
+            if (icon) {
+              icon.classList.remove('opacity-0');
+              icon.classList.add('opacity-100');
+            }
+            if (title) title.className = 'font-bold text-xs text-emerald-800 dark:text-emerald-200 line-through decoration-emerald-500';
+          } else {
+            card.className = 'w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 transition active:scale-[0.99] flex items-center gap-3';
+            box.className = 'w-6 h-6 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center text-white shrink-0 transition';
+            if (icon) {
+              icon.classList.remove('opacity-100');
+              icon.classList.add('opacity-0');
+            }
+            if (title) title.className = 'font-bold text-xs text-slate-800 dark:text-white';
+          }
+        }
+      }
+
+      // 5. Selected Day Note
+      const noteDayLabel = document.getElementById('challenge-note-day-label');
+      const noteInput = document.getElementById('challenge-day-note-input');
+      if (noteDayLabel) noteDayLabel.textContent = `วันที่ ${selectedDay}`;
+      if (noteInput) {
+        noteInput.value = activeDayData.note || '';
+      }
+    }
+
+    // Sync Target Image on Goal Sharing Screen (Screen 9) from Simulation Screen (Screen 7)
+    function syncShareTargetImage(targetW) {
+      const shareImg = document.getElementById('share-target-img');
+      if (!shareImg) return;
+
+      // 1. ดึงตรงๆ จากรูปเป้าหมายในหน้าจำลอง (Screen 7)
+      const simAfterImg = document.querySelector('#sim-after-img img');
+      if (simAfterImg && simAfterImg.src && !simAfterImg.src.includes('error')) {
+        shareImg.src = simAfterImg.src;
+        return;
+      }
+
+      // 2. ถ้าไม่มี ให้คำนวณจากเป้าหมายน้ำหนัก
+      const goal = (typeof backend !== 'undefined' && backend.getGoal) ? backend.getGoal() : null;
+      const tW = targetW || (goal ? goal.targetWeight : (parseFloat(document.getElementById('target-weight-input')?.value) || 52));
+      const height = parseFloat(localStorage.getItem('user_height')) || 165;
+      const targetBMI = parseFloat((tW / Math.pow(height / 100, 2)).toFixed(1));
+
+      if (typeof getShapeImageByWeight === 'function') {
+        shareImg.src = getShapeImageByWeight(tW, targetBMI, 'normal');
+      } else {
+        shareImg.src = 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400';
+      }
+    }
+
+    // ==========================================
+    // REAL GOAL CARD DOWNLOAD & SOCIAL SHARE
+    // ==========================================
+    let lastGeneratedGoalDataUrl = null;
+    let lastGeneratedGoalBlob = null;
+
+    function loadSafeImage(src) {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          // If direct load fails (e.g. CORS), try via Cloudflare Worker proxy
+          if (src.startsWith('http') && !src.includes('/api/proxy-image')) {
+            const proxyImg = new Image();
+            proxyImg.crossOrigin = 'anonymous';
+            proxyImg.onload = () => resolve(proxyImg);
+            proxyImg.onerror = () => resolve(null);
+            proxyImg.src = `/api/proxy-image?url=${encodeURIComponent(src)}`;
+          } else {
+            resolve(null);
+          }
+        };
+
+        // If external http URL, run directly through proxy for 100% clean canvas
+        if (src.startsWith('http') && !src.startsWith(window.location.origin) && !src.startsWith('data:')) {
+          img.src = `/api/proxy-image?url=${encodeURIComponent(src)}`;
+        } else {
+          img.src = src;
+        }
+      });
+    }
+
+    async function drawHighResGoalCard() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1480;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return canvas;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const bgColor = isDark ? '#1e293b' : '#ffffff';
+      const textColor = isDark ? '#f8fafc' : '#0f172a';
+      const subTextColor = isDark ? '#94a3b8' : '#64748b';
+
+      // 1. Full Canvas Background Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      if (isDark) {
+        bgGrad.addColorStop(0, '#0f172a');
+        bgGrad.addColorStop(1, '#020617');
+      } else {
+        bgGrad.addColorStop(0, '#f0f9ff');
+        bgGrad.addColorStop(1, '#e0f2fe');
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 2. Main Card Body
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 15;
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
+      ctx.lineWidth = 4;
+      roundRect(ctx, 50, 50, 980, 1380, 48, true, true);
+      ctx.restore();
+
+      // 3. Header Branding Badge
+      ctx.fillStyle = '#0284c7';
+      ctx.font = 'bold 34px Prompt, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SKM.WELLNESS', 540, 125);
+
+      ctx.fillStyle = subTextColor;
+      ctx.font = '500 20px Prompt, sans-serif';
+      ctx.fillText('สูตรคุณหมอ • โปรแกรมสุขภาพและการดูแลเฉพาะบุคคล', 540, 165);
+
+      // 4. Target Body Photo
+      const rawImgSrc = document.getElementById('share-target-img')?.src || '';
+      const loadedImg = await loadSafeImage(rawImgSrc);
+
+      const imgW = 600;
+      const imgH = 740;
+      const imgX = (1080 - imgW) / 2;
+      const imgY = 195;
+
+      ctx.save();
+      roundRect(ctx, imgX, imgY, imgW, imgH, 32, false, false);
+      ctx.clip();
+      if (loadedImg) {
+        ctx.drawImage(loadedImg, imgX, imgY, imgW, imgH);
+      } else {
+        ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
+        ctx.fillRect(imgX, imgY, imgW, imgH);
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 6;
+      roundRect(ctx, imgX, imgY, imgW, imgH, 32, false, true);
+
+      // 5. Goal Title & Milestone Badge
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold 36px Prompt, sans-serif';
+      ctx.fillText('เป้าหมายของฉัน', 540, 990);
+
+      const goalTitle = document.getElementById('share-goal-title')?.textContent || 'ลดน้ำหนัก 8 กก. ภายใน 30 วัน';
+      ctx.fillStyle = '#0284c7';
+      ctx.font = 'bold 44px Prompt, sans-serif';
+      ctx.fillText(goalTitle, 540, 1055);
+
+      // 6. Weight Stats Comparison Box
+      ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(120, 1105);
+      ctx.lineTo(960, 1105);
+      ctx.stroke();
+
+      const curWeight = document.getElementById('share-current-weight')?.textContent || '60 กก.';
+      ctx.fillStyle = subTextColor;
+      ctx.font = '24px Prompt, sans-serif';
+      ctx.fillText('น้ำหนักปัจจุบัน', 340, 1150);
+      ctx.fillStyle = textColor;
+      ctx.font = 'bold 44px Prompt, sans-serif';
+      ctx.fillText(curWeight, 340, 1210);
+
+      ctx.beginPath();
+      ctx.moveTo(540, 1125);
+      ctx.lineTo(540, 1225);
+      ctx.stroke();
+
+      const tarWeight = document.getElementById('share-target-weight')?.textContent || '52 กก.';
+      ctx.fillStyle = subTextColor;
+      ctx.font = '24px Prompt, sans-serif';
+      ctx.fillText('เป้าหมาย', 740, 1150);
+      ctx.fillStyle = '#0284c7';
+      ctx.font = 'bold 44px Prompt, sans-serif';
+      ctx.fillText(tarWeight, 740, 1210);
+
+      // 7. Footer & Coach Watermark
+      const coach = (typeof backend !== 'undefined' && backend.getSelectedCoach) ? backend.getSelectedCoach() : null;
+      const coachText = (coach && coach.name && !coach.isCentral) ? `โค้ชผู้ดูแล: ${coach.name}` : 'SKM.WELLNESS ADVISOR TEAM';
+
+      ctx.fillStyle = '#0284c7';
+      ctx.font = 'bold 22px Prompt, sans-serif';
+      ctx.fillText(coachText, 540, 1310);
+
+      ctx.fillStyle = subTextColor;
+      ctx.font = '20px Prompt, sans-serif';
+      ctx.fillText('QR ติดตามผล • บันทึกเป้าหมายสำเร็จ', 540, 1350);
+
+      return canvas;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    async function generateGoalCardCanvas() {
+      // 1. Always generate high-res clean 1080x1480 canvas first (never tainted, 100% reliable)
+      try {
+        const canvas = await drawHighResGoalCard();
+        if (canvas) return canvas;
+      } catch (e) {
+        console.warn('drawHighResGoalCard error:', e);
+      }
+
+      // 2. Fallback to html2canvas if available
+      const card = document.getElementById('shareable-goal-card');
+      if (card && typeof html2canvas === 'function') {
+        try {
+          const isDark = document.documentElement.classList.contains('dark');
+          return await html2canvas(card, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            logging: false
+          });
+        } catch (err) {}
+      }
+
+      return null;
+    }
+
+    function openShareImageModal(dataUrl) {
+      const modal = document.getElementById('share-image-modal');
+      const img = document.getElementById('share-modal-img');
+      if (modal && img) {
+        img.src = dataUrl;
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function closeShareImageModal() {
+      const modal = document.getElementById('share-image-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function triggerDirectDownload() {
+      if (!lastGeneratedGoalDataUrl) return;
+      const link = document.createElement('a');
+      link.download = `skm-wellness-goal-${Date.now()}.png`;
+      link.href = lastGeneratedGoalDataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (typeof backend !== 'undefined' && backend.showToast) {
+        backend.showToast('เริ่มดาวน์โหลดไฟล์แล้ว! 🎉', 'success');
+      }
+    }
+
+    async function triggerWebShareDirect() {
+      const goalTitle = document.getElementById('share-goal-title')?.textContent || 'เป้าหมายสุขภาพของฉัน';
+      const shareText = `เป้าหมายของฉัน: ${goalTitle} กับ SKM.WELLNESS ✨ มาร่วมสร้างสุขภาพดีไปด้วยกัน!`;
+      const shareUrl = window.location.href;
+
+      if (lastGeneratedGoalBlob && navigator.share) {
+        const file = new File([lastGeneratedGoalBlob], 'skm-wellness-goal.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'เป้าหมายของฉัน - SKM.WELLNESS',
+              text: shareText,
+              files: [file]
+            });
+            return;
+          } catch (e) {
+            if (e.name === 'AbortError') return;
+          }
+        }
+      }
+
+      // Fallback: share text/link
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'เป้าหมายของฉัน - SKM.WELLNESS',
+            text: shareText,
+            url: shareUrl
+          });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('คัดลอกข้อความแชร์ไปยังคลิปบอร์ดแล้ว! 📋', 'success');
+        }
+      } catch (err) {}
+    }
+
+    async function downloadGoalCardImage() {
+      const btn = document.getElementById('download-share-btn');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> <span>กำลังสร้างรูปภาพ...</span>';
+      }
+
+      try {
+        const canvas = await generateGoalCardCanvas();
+        if (!canvas) throw new Error('Cannot create canvas');
+
+        const dataUrl = canvas.toDataURL('image/png');
+        lastGeneratedGoalDataUrl = dataUrl;
+
+        canvas.toBlob((blob) => {
+          lastGeneratedGoalBlob = blob;
+        }, 'image/png');
+
+        // 1. Direct browser download
+        const link = document.createElement('a');
+        link.download = `skm-wellness-goal-${Date.now()}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // 2. Open Preview & Mobile Save Modal
+        openShareImageModal(dataUrl);
+
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('สร้างรูปภาพสำเร็จ! แตะค้างเพื่อบันทึกรูปได้ทันที 🎉', 'success');
+        }
+      } catch (err) {
+        console.error('Download error:', err);
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่', 'error');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
+    }
+
+    async function shareGoalCardImage() {
+      const btn = document.getElementById('social-share-btn');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> <span>กำลังเตรียมแชร์...</span>';
+      }
+
+      try {
+        const canvas = await generateGoalCardCanvas();
+        if (!canvas) throw new Error('Cannot create canvas');
+
+        const dataUrl = canvas.toDataURL('image/png');
+        lastGeneratedGoalDataUrl = dataUrl;
+
+        const goalTitle = document.getElementById('share-goal-title')?.textContent || 'เป้าหมายสุขภาพของฉัน';
+        const shareText = `เป้าหมายของฉัน: ${goalTitle} กับ SKM.WELLNESS ✨ มาร่วมสร้างสุขภาพดีไปด้วยกัน!`;
+        const shareUrl = window.location.href;
+
+        canvas.toBlob(async (blob) => {
+          lastGeneratedGoalBlob = blob;
+
+          // 1. Try Native Web Share with actual Image File (works directly on mobile iOS/Android)
+          if (navigator.share && blob) {
+            const file = new File([blob], 'skm-wellness-goal.png', { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({
+                  title: 'เป้าหมายของฉัน - SKM.WELLNESS',
+                  text: shareText,
+                  files: [file]
+                });
+                if (typeof backend !== 'undefined' && backend.showToast) {
+                  backend.showToast('แชร์รูปภาพสำเร็จแล้ว! 🎉', 'success');
+                }
+                return;
+              } catch (shareErr) {
+                if (shareErr.name === 'AbortError') return; // User cancelled
+                console.warn('Native file share failed:', shareErr);
+              }
+            }
+          }
+
+          // 2. Open Modal with Image Preview & save buttons
+          openShareImageModal(dataUrl);
+
+          // Copy text if share not available
+          try {
+            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+            if (typeof backend !== 'undefined' && backend.showToast) {
+              backend.showToast('เปิดรูปภาพและคัดลอกข้อความแชร์แล้ว! 📋', 'success');
+            }
+          } catch (clipErr) {
+            if (typeof backend !== 'undefined' && backend.showToast) {
+              backend.showToast('เปิดรูปภาพเป้าหมายพร้อมแชร์แล้ว!', 'success');
+            }
+          }
+        }, 'image/png');
+
+      } catch (err) {
+        console.error('Share error:', err);
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('ไม่สามารถเปิดแชร์ได้ กรุณาลองใหม่', 'error');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      }
     }
 
     // Settings Modal Functions
@@ -1109,11 +2153,20 @@
 
     // Initialize on load
     window.addEventListener('DOMContentLoaded', () => {
+      // Check URL for coach referral code (?ref=... or ?coach=...)
+      if (typeof backend !== 'undefined' && backend.checkUrlReferral) {
+        backend.checkUrlReferral();
+      }
+      const savedW = localStorage.getItem('user_weight') || '60';
+      const savedH = localStorage.getItem('user_height') || '165';
+      if (savedW && document.getElementById('input-weight')) document.getElementById('input-weight').value = savedW;
+      if (savedH && document.getElementById('input-height')) document.getElementById('input-height').value = savedH;
       backend.loadCustomLogo();
       backend.loadCustomBackground();
-      calcBMIAction();
+      updateBMIDisplay(parseFloat(savedW), parseFloat(savedH));
       loadCoachInfo();
       loadBodyShapes();
+      initMiniChallengeUI();
 
       // Load checklist status
       document.querySelectorAll('[id^="check-"]').forEach((checkbox, index) => {
@@ -1140,16 +2193,18 @@
 
     // Dynamic Body Shape Selection linked to BMI
     let selectedBodyShape = null;
-    let hasUserManuallySelectedShape = false;
 
     function syncBodyShapeWithBMI() {
       const weightInput = document.getElementById('input-weight');
       const heightInput = document.getElementById('input-height');
-      const w = weightInput ? parseFloat(weightInput.value) || 60 : 60;
-      const h = heightInput ? parseFloat(heightInput.value) || 165 : 165;
+      const w = (weightInput && parseFloat(weightInput.value)) || parseFloat(localStorage.getItem('user_weight')) || 60;
+      const h = (heightInput && parseFloat(heightInput.value)) || parseFloat(localStorage.getItem('user_height')) || 165;
 
       const heightM = h / 100;
       const bmi = parseFloat((w / (heightM * heightM)).toFixed(1));
+      localStorage.setItem('user_weight', w);
+      localStorage.setItem('user_height', h);
+      localStorage.setItem('user_bmi', bmi);
 
       // Asian/Thai BMI classification
       let targetShape = 'normal';
@@ -1164,15 +2219,14 @@
         targetShape = 'normal';
         categoryName = 'ปกติ (สมส่วนสุขภาพดี)';
         badgeColor = 'emerald';
-      } else if (bmi <= 24.9) {
-        targetShape = 'fat';
-        categoryName = 'เริ่มมีน้ำหนักเกิน (ท้วม)';
-        badgeColor = 'amber';
       } else {
         targetShape = 'fat';
-        categoryName = 'อ้วน / ควรควบคุมน้ำหนัก';
-        badgeColor = 'rose';
+        categoryName = bmi <= 24.9 ? 'เริ่มมีน้ำหนักเกิน (ท้วม)' : 'อ้วน / ควรควบคุมน้ำหนัก';
+        badgeColor = bmi <= 24.9 ? 'amber' : 'rose';
       }
+
+      selectedBodyShape = targetShape;
+      localStorage.setItem('selected_body_shape', targetShape);
 
       // Update Screen 6 text elements
       const evalCategory = document.getElementById('shape-eval-category');
@@ -1188,21 +2242,7 @@
       if (evalHeight) evalHeight.textContent = h;
       if (evalBmi) evalBmi.textContent = bmi;
 
-      // Select matching shape if not manually changed
-      if (!hasUserManuallySelectedShape || !selectedBodyShape) {
-        selectShape(targetShape, true);
-      } else {
-        selectShape(selectedBodyShape, false);
-      }
-    }
-
-    function selectShape(shapeType, isAuto = false) {
-      if (!isAuto) {
-        hasUserManuallySelectedShape = true;
-      }
-      selectedBodyShape = shapeType;
-      localStorage.setItem('selected_body_shape', shapeType);
-
+      // Update visual display: only matching shape is highlighted; others are static comparison references
       const shapes = ['thin', 'normal', 'fat'];
       shapes.forEach(shape => {
         const card = document.getElementById(`card-shape-${shape}`);
@@ -1210,62 +2250,26 @@
         const container = document.getElementById(`shape-${shape}`);
 
         if (card && container) {
-          if (shape === shapeType) {
-            // Selected shape card: highlighted and enlarged
-            card.className = 'w-28 text-center cursor-pointer transition-all duration-300 p-2.5 rounded-2xl scale-110 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-600 shadow-xl';
-            container.className = 'h-44 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-500';
-            if (badge) badge.classList.remove('hidden');
+          if (shape === targetShape) {
+            card.className = 'w-32 text-center transition-all duration-300 p-3 rounded-2xl scale-105 opacity-100 z-10 bg-sky-50 dark:bg-slate-800 border-2 border-sky-500 shadow-xl select-none';
+            container.className = 'h-48 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center text-5xl shadow-md overflow-hidden border-2 border-sky-400';
+            if (badge) {
+              badge.classList.remove('hidden');
+              badge.innerHTML = `<span class="inline-block px-2.5 py-1 bg-${badgeColor}-600 text-white text-[10px] font-bold rounded-full shadow">✓ รูปร่างของคุณ</span>`;
+            }
           } else {
-            // Non-selected shapes: smaller, dimmed
-            card.className = 'w-20 text-center cursor-pointer transition-all duration-300 p-2 rounded-2xl scale-90 opacity-40 hover:opacity-80';
+            card.className = 'w-20 text-center transition-all duration-300 p-2 rounded-2xl scale-90 opacity-30 select-none pointer-events-none';
             container.className = 'h-36 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-4xl overflow-hidden border border-slate-200 dark:border-slate-700';
             if (badge) badge.classList.add('hidden');
           }
         }
       });
 
-      updateScreen7Simulation(shapeType);
+      updateScreen7Simulation(targetShape);
     }
 
     function updateScreen7Simulation(shapeType) {
-      const beforeBox = document.getElementById('sim-before-img');
-      const afterBox = document.getElementById('sim-after-img');
-      const beforeLabel = document.getElementById('sim-before-label');
-      const afterLabel = document.getElementById('sim-after-label');
-
-      const weightInput = document.getElementById('input-weight');
-      const currentW = weightInput ? parseFloat(weightInput.value) || 60 : 60;
-
-      const customShape = typeof getBodyShapeData === 'function' ? getBodyShapeData(shapeType) : null;
-
-      if (shapeType === 'thin') {
-        if (beforeBox) {
-          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🧍‍♀️';
-        }
-        if (afterBox) {
-          afterBox.innerHTML = '🏃‍♀️';
-        }
-        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
-        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (${(currentW + 3).toFixed(1)} กก. มีกล้ามเนื้อ)`;
-      } else if (shapeType === 'fat') {
-        if (beforeBox) {
-          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🧘‍♀️';
-        }
-        if (afterBox) {
-          afterBox.innerHTML = '💃';
-        }
-        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
-        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (${Math.max(40, currentW - 4).toFixed(1)} กก. เฟิร์มกระชับ)`;
-      } else {
-        if (beforeBox) {
-          beforeBox.innerHTML = customShape?.image ? `<img src="${customShape.image}" class="w-full h-full object-cover">` : '🏃‍♀️';
-        }
-        if (afterBox) {
-          afterBox.innerHTML = '✨💃';
-        }
-        if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
-        if (afterLabel) afterLabel.textContent = `หลัง 30 วัน (เอวคอด หุ่นลีน)`;
-      }
+      calculateGoalAndSimulation();
     }
 
     // Load Body Shapes
@@ -1300,21 +2304,37 @@
         ? coach.photo
         : fallbackPhoto;
 
-      // Update Screen 1 (Home Screen Coach)
-      const coachPhoto1 = document.getElementById('coach-photo-1');
-      const coachName1 = document.getElementById('coach-name-1');
-      const coachCode1 = document.getElementById('coach-code-1');
-      const coachTitle1 = document.getElementById('coach-title-1');
-      const coachQuote1 = document.getElementById('coach-quote-1');
+      // Update Screen 1 (Home Screen Coach): Only show if actual coach ID exists
+      const homeCoachCard = document.getElementById('home-coach-card');
+      const hasActualCoach = Boolean(coach && !coach.isCentral && coach.code);
 
-      if (coachPhoto1) {
-        coachPhoto1.src = safePhoto;
-        coachPhoto1.onerror = function() { this.src = fallbackPhoto; };
+      if (homeCoachCard) {
+        if (hasActualCoach) {
+          homeCoachCard.classList.remove('hidden');
+          homeCoachCard.classList.add('flex');
+
+          const coachPhoto1 = document.getElementById('coach-photo-1');
+          const coachName1 = document.getElementById('coach-name-1');
+          const coachCode1 = document.getElementById('coach-code-1');
+          const coachTitle1 = document.getElementById('coach-title-1');
+          const coachQuote1 = document.getElementById('coach-quote-1');
+
+          if (coachPhoto1) {
+            coachPhoto1.src = safePhoto;
+            coachPhoto1.onerror = function() { this.src = fallbackPhoto; };
+          }
+          if (coachName1 && coach.name) coachName1.textContent = coach.name;
+          if (coachCode1 && coach.code) {
+            coachCode1.className = 'px-1.5 py-0.5 bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-[10px] font-bold rounded';
+            coachCode1.textContent = coach.code;
+          }
+          if (coachTitle1 && coach.title) coachTitle1.textContent = coach.title;
+          if (coachQuote1 && coach.quote) coachQuote1.textContent = `"${coach.quote}"`;
+        } else {
+          homeCoachCard.classList.add('hidden');
+          homeCoachCard.classList.remove('flex');
+        }
       }
-      if (coachName1 && coach.name) coachName1.textContent = coach.name;
-      if (coachCode1 && coach.code) coachCode1.textContent = coach.code;
-      if (coachTitle1 && coach.title) coachTitle1.textContent = coach.title;
-      if (coachQuote1 && coach.quote) coachQuote1.textContent = `"${coach.quote}"`;
 
       // Update Screen 5 (Mini Challenge)
       const coachPhoto5 = document.getElementById('coach-photo-5');
@@ -1367,37 +2387,247 @@
         userHeaderAvatar.src = safePhoto;
         userHeaderAvatar.onerror = function() { this.src = fallbackPhoto; };
       }
+
+      // Developer Coach check: Only developer coaches see admin settings buttons
+      const isDev = Boolean(coach.isDeveloper || coach.code === 'SKM321');
+      const adminBtn = document.getElementById('admin-settings-btn');
+      if (adminBtn) {
+        if (isDev) {
+          adminBtn.classList.remove('hidden');
+          adminBtn.classList.add('flex');
+        } else {
+          adminBtn.classList.add('hidden');
+          adminBtn.classList.remove('flex');
+        }
+      }
+
+      const devAdminContainer = document.getElementById('coach-dev-admin-container');
+      if (devAdminContainer) {
+        if (isDev) {
+          devAdminContainer.classList.remove('hidden');
+        } else {
+          devAdminContainer.classList.add('hidden');
+        }
+      }
     }
 
     // Contact Form Handler (Screen 4)
     function submitContactForm() {
-      const lineId = document.querySelector('input[placeholder="กรอก LINE ID"]').value;
-      const phone = document.querySelector('input[placeholder="กรอกเบอร์โทรศัพท์"]').value;
-      const email = document.querySelector('input[placeholder="กรอกอีเมล"]').value;
-
-      if (!lineId && !phone && !email) {
-        backend.showToast('กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง', 'error');
-        return;
-      }
-
-      backend.submitContactForm({ lineId, phone, email });
-      setTimeout(() => goToScreen(5), 1000);
+      handleCalculateAction();
     }
 
-    // Goal Form Handler (Screen 8)
-    function saveGoalAndGo() {
-      const targetWeight = document.getElementById('target-weight-input').value;
-      const bodyShape = document.querySelector('select').value;
-      const duration = document.querySelectorAll('select')[1].value;
+    // Simulation & Goal Calculation Engine
+    let currentSimDuration = 30;
+
+    function setSimDuration(days) {
+      currentSimDuration = days;
+      [7, 14, 30, 60].forEach(d => {
+        const btn = document.getElementById(`sim-btn-${d}`);
+        if (btn) {
+          if (d === days) {
+            btn.className = 'py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-sky-600 bg-sky-50 dark:bg-slate-800 text-sky-600 transition';
+          } else {
+            btn.className = 'py-2.5 px-2 rounded-2xl text-xs font-bold border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition';
+          }
+        }
+      });
+      calculateGoalAndSimulation();
+    }
+
+    function calculateGoalAndSimulation() {
+      const weightInput = document.getElementById('input-weight');
+      const heightInput = document.getElementById('input-height');
+      const currentW = (weightInput && parseFloat(weightInput.value)) || parseFloat(localStorage.getItem('user_weight')) || 60;
+      const currentH = (heightInput && parseFloat(heightInput.value)) || parseFloat(localStorage.getItem('user_height')) || 165;
+      const heightM = currentH / 100;
+      const currentBMI = parseFloat((currentW / (heightM * heightM)).toFixed(1));
+
+      const targetInput = document.getElementById('target-weight-input');
+      let targetW = targetInput ? parseFloat(targetInput.value) : 0;
+      if (!targetW || isNaN(targetW)) {
+        if (currentBMI > 22.9) {
+          targetW = Math.round(21.5 * heightM * heightM);
+        } else if (currentBMI < 18.5) {
+          targetW = Math.round(20.0 * heightM * heightM);
+        } else {
+          targetW = Math.max(40, currentW - 3);
+        }
+        if (targetInput) targetInput.value = targetW;
+      }
+
+      const targetBMI = parseFloat((targetW / (heightM * heightM)).toFixed(1));
+      const diff = parseFloat((currentW - targetW).toFixed(1));
+
+      // 1. Comparison Numbers
+      const curWEl = document.getElementById('sim-current-weight');
+      const curBMIEl = document.getElementById('sim-current-bmi');
+      const tarWEl = document.getElementById('sim-target-weight');
+      const tarBMIEl = document.getElementById('sim-target-bmi');
+      const diffBadge = document.getElementById('goal-diff-badge');
+      const arrowChange = document.getElementById('sim-arrow-change');
+      const durationBadge = document.getElementById('sim-duration-badge');
+
+      if (curWEl) curWEl.textContent = currentW;
+      if (curBMIEl) curBMIEl.textContent = `BMI ${currentBMI}`;
+      if (tarWEl) tarWEl.textContent = targetW;
+      if (tarBMIEl) tarBMIEl.textContent = `BMI ${targetBMI}`;
+
+      if (durationBadge) durationBadge.textContent = `ใน ${currentSimDuration} วัน`;
+
+      if (diff > 0) {
+        if (diffBadge) {
+          diffBadge.textContent = `ลด ${diff} กก.`;
+          diffBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+        }
+        if (arrowChange) {
+          arrowChange.textContent = `-${diff} กก.`;
+          arrowChange.className = 'text-[10px] font-bold text-emerald-600 mb-1';
+        }
+      } else if (diff < 0) {
+        const gain = Math.abs(diff);
+        if (diffBadge) {
+          diffBadge.textContent = `เพิ่ม ${gain} กก.`;
+          diffBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+        }
+        if (arrowChange) {
+          arrowChange.textContent = `+${gain} กก.`;
+          arrowChange.className = 'text-[10px] font-bold text-blue-600 mb-1';
+        }
+      } else {
+        if (diffBadge) {
+          diffBadge.textContent = 'รักษารูปร่าง';
+          diffBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300';
+        }
+        if (arrowChange) {
+          arrowChange.textContent = 'ฟิตคงที่';
+          arrowChange.className = 'text-[10px] font-bold text-sky-600 mb-1';
+        }
+      }
+
+      // 2. Before / After Visuals (pulls images from backend/intervals, never emoji)
+      const beforeBox = document.getElementById('sim-before-img');
+      const afterBox = document.getElementById('sim-after-img');
+      const beforeLabel = document.getElementById('sim-before-label');
+      const afterLabel = document.getElementById('sim-after-label');
+
+      const beforeImgUrl = (typeof getShapeImageByWeight === 'function')
+        ? getShapeImageByWeight(currentW, currentBMI, selectedBodyShape || 'normal')
+        : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400';
+
+      const targetImgUrl = (typeof getShapeImageByWeight === 'function')
+        ? getShapeImageByWeight(targetW, targetBMI, 'normal')
+        : 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400';
+
+      if (beforeBox) {
+        beforeBox.innerHTML = `<img src="${beforeImgUrl}" class="w-full h-full object-cover rounded-2xl" alt="ก่อนเริ่ม" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400';">`;
+      }
+      if (beforeLabel) beforeLabel.textContent = `ก่อนเริ่ม (${currentW} กก.)`;
+
+      if (afterBox) {
+        afterBox.innerHTML = `<img src="${targetImgUrl}" class="w-full h-full object-cover rounded-2xl" alt="เป้าหมาย" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400';">`;
+      }
+      if (afterLabel) afterLabel.textContent = `เป้าหมาย (${targetW} กก.)`;
+      const shareTargetImg = document.getElementById('share-target-img');
+      if (shareTargetImg) shareTargetImg.src = targetImgUrl;
+
+      // 3. Dynamic 5-point Graph Milestones
+      const p1 = currentW;
+      const p2 = parseFloat((currentW - diff * 0.25).toFixed(1));
+      const p3 = parseFloat((currentW - diff * 0.50).toFixed(1));
+      const p4 = parseFloat((currentW - diff * 0.75).toFixed(1));
+      const p5 = targetW;
+
+      if (document.getElementById('graph-p1')) document.getElementById('graph-p1').textContent = `${p1}kg`;
+      if (document.getElementById('graph-p2')) document.getElementById('graph-p2').textContent = `${p2}kg`;
+      if (document.getElementById('graph-p3')) document.getElementById('graph-p3').textContent = `${p3}kg`;
+      if (document.getElementById('graph-p4')) document.getElementById('graph-p4').textContent = `${p4}kg`;
+      if (document.getElementById('graph-p5')) document.getElementById('graph-p5').textContent = `${p5}kg`;
+
+      const d1 = document.getElementById('graph-d1');
+      const d2 = document.getElementById('graph-d2');
+      const d3 = document.getElementById('graph-d3');
+      const d4 = document.getElementById('graph-d4');
+      const d5 = document.getElementById('graph-d5');
+      if (currentSimDuration === 7) {
+        if (d1) d1.textContent = 'เริ่ม';
+        if (d2) d2.textContent = 'วันที่ 2';
+        if (d3) d3.textContent = 'วันที่ 4';
+        if (d4) d4.textContent = 'วันที่ 6';
+        if (d5) d5.textContent = 'ครบ 7 วัน';
+      } else if (currentSimDuration === 14) {
+        if (d1) d1.textContent = 'เริ่ม';
+        if (d2) d2.textContent = 'วันที่ 4';
+        if (d3) d3.textContent = 'วันที่ 8';
+        if (d4) d4.textContent = 'วันที่ 11';
+        if (d5) d5.textContent = 'ครบ 14 วัน';
+      } else if (currentSimDuration === 60) {
+        if (d1) d1.textContent = 'เริ่ม';
+        if (d2) d2.textContent = 'สัปดาห์ 2';
+        if (d3) d3.textContent = 'เดือนที่ 1';
+        if (d4) d4.textContent = 'สัปดาห์ 6';
+        if (d5) d5.textContent = 'ครบ 60 วัน';
+      } else {
+        if (d1) d1.textContent = 'เริ่ม';
+        if (d2) d2.textContent = 'สัปดาห์ 1';
+        if (d3) d3.textContent = 'สัปดาห์ 2';
+        if (d4) d4.textContent = 'สัปดาห์ 3';
+        if (d5) d5.textContent = 'ครบ 30 วัน';
+      }
+
+      // 4. Rate & Analysis Box
+      const weeklyRate = parseFloat((Math.abs(diff) / (currentSimDuration / 7)).toFixed(1));
+      const rateLabel = document.getElementById('sim-change-rate');
+      const analysisText = document.getElementById('sim-analysis-text');
+
+      if (rateLabel) {
+        rateLabel.textContent = `อัตราการเปลี่ยนแปลงเฉลี่ย: ~${weeklyRate} กก./สัปดาห์`;
+      }
+
+      if (analysisText) {
+        if (weeklyRate <= 1.0) {
+          analysisText.textContent = `เป้าหมายลดลง ${diff} กก. ใน ${currentSimDuration} วัน เป็นอัตราที่ปลอดภัยและยั่งยืนต่อระบบเผาผลาญ เมื่อร่วมกับ Mini Challenge 3 ข้อ สามารถทำได้จริง`;
+        } else {
+          analysisText.textContent = `เป้าหมายลดลง ${diff} กก. ใน ${currentSimDuration} วัน เป็นระดับเข้มข้น แนะนำติดตามคำแนะนำจากโค้ชผู้ดูแลและดื่มน้ำให้เพียงพอ`;
+        }
+      }
+    }
+
+    function saveGoalAndProceed() {
+      const targetInput = document.getElementById('target-weight-input');
+      const targetW = targetInput ? parseFloat(targetInput.value) : 52;
+      const currentW = parseFloat(localStorage.getItem('user_weight')) || 60;
+      const focus = document.getElementById('target-body-focus')?.value || 'กระชับสัดส่วน / ลีนหน้าท้อง';
+      const duration = `${currentSimDuration} วัน`;
+      const diff = parseFloat((currentW - targetW).toFixed(1));
 
       backend.saveGoal({
-        targetWeight: parseFloat(targetWeight),
-        bodyShape,
-        duration,
-        currentWeight: parseFloat(document.getElementById('input-weight').value || 60)
+        targetWeight: targetW,
+        bodyShape: focus,
+        duration: duration,
+        currentWeight: currentW
       });
 
+      // Update Screen 9 (แชร์เป้าหมายของฉัน)
+      const shareTitle = document.getElementById('share-goal-title');
+      const shareCur = document.getElementById('share-current-weight');
+      const shareTar = document.getElementById('share-target-weight');
+
+      if (shareTitle) {
+        shareTitle.textContent = (diff > 0)
+          ? `ลดน้ำหนัก ${diff} กก. ภายใน ${duration}`
+          : ((diff < 0) ? `เพิ่มกล้ามเนื้อ ${Math.abs(diff)} กก. ภายใน ${duration}` : `รักษารูปร่างฟิตเฟิร์ม ภายใน ${duration}`);
+      }
+      if (shareCur) shareCur.textContent = `${currentW} กก.`;
+      if (shareTar) shareTar.textContent = `${targetW} กก.`;
+
+      // ดึงรูปเป้าหมายจากหน้าจำลองผลลัพธ์การเปลี่ยนแปลง
+      syncShareTargetImage(targetW);
+
       goToScreen(9);
+    }
+
+    function saveGoalAndGo() {
+      saveGoalAndProceed();
     }
 
     // Coach Code Verification (Screen 15)
@@ -1409,6 +2639,38 @@
         setTimeout(() => goToScreen(16), 500);
       }
     }
+
+    // Developer Secret Entrance (Tap avatar 5 times or Ctrl+Shift+A)
+    let devSecretTapCount = 0;
+    let devSecretTapTimer = null;
+
+    function handleProfileClick(event) {
+      devSecretTapCount++;
+      clearTimeout(devSecretTapTimer);
+      devSecretTapTimer = setTimeout(() => {
+        devSecretTapCount = 0;
+      }, 2000);
+
+      if (devSecretTapCount >= 5) {
+        devSecretTapCount = 0;
+        if (typeof backend !== 'undefined' && backend.showToast) {
+          backend.showToast('🔐 ปลดล็อกระบบผู้พัฒนา (กำลังเปิดหน้า Admin...)', 'success');
+        }
+        setTimeout(() => {
+          window.location.href = 'coach-login.html';
+        }, 500);
+        return;
+      }
+
+      goToScreen(16);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        window.location.href = 'coach-login.html';
+      }
+    });
 
     // Track Selection (Screen 13)
     function selectTrack(trackId) {
